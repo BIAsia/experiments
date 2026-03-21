@@ -13,10 +13,15 @@ export type Message = {
   id: string
   sender: 'owner' | 'agent' | 'system'
   agentId?: string
-  kind?: 'text' | 'task' | 'summary'
+  kind?: 'text' | 'task' | 'summary' | 'file-event' | 'memory-event'
   title?: string
   text: string
   meta?: string
+  references?: {
+    files?: string[]
+    memories?: string[]
+    agents?: string[]
+  }
 }
 
 export type FileItem = {
@@ -87,6 +92,10 @@ export const messages: Message[] = [
     agentId: 'mona',
     text: '收到。我先把产品骨架收敛成一个主 chat 页面，然后把 Files / Memory 做成由消息触发的扩展状态。',
     meta: '07:06',
+    references: {
+      agents: ['rune', 'iris'],
+      memories: ['Project memory', 'Session context'],
+    },
   },
   {
     id: '3',
@@ -96,6 +105,9 @@ export const messages: Message[] = [
     title: 'Delegated work',
     text: 'Rune 负责 UI shell 与 component hierarchy；Iris 负责 memory / file semantics；我来汇总成 demo narrative。',
     meta: '07:07',
+    references: {
+      agents: ['rune', 'iris'],
+    },
   },
   {
     id: '4',
@@ -103,6 +115,10 @@ export const messages: Message[] = [
     agentId: 'rune',
     text: '建议用 Discord-like 左侧组织，但中间 timeline 保持 chat-native。Files 和 Memory 不常驻，以 contextual rail 的方式展开。',
     meta: '07:08',
+    references: {
+      files: ['chat/src/App.tsx'],
+      memories: ['UI shell principle'],
+    },
   },
   {
     id: '5',
@@ -110,13 +126,16 @@ export const messages: Message[] = [
     agentId: 'iris',
     text: 'Project memory 可以先只分两层：short-term context 与 long-term agreements。更新时展示 changed by 与 scope，会很清楚。',
     meta: '07:09',
+    references: {
+      memories: ['Default room is multi-agent', 'Memory expands only when triggered'],
+    },
   },
   {
     id: '6',
     sender: 'system',
-    kind: 'summary',
-    title: 'Context expansion triggered',
-    text: 'Mona referenced 3 files and promoted 2 agreements into project memory.',
+    kind: 'file-event',
+    title: 'Files panel activated',
+    text: 'Mona referenced 3 working files while shaping the project chat shell and agent color system.',
     meta: '07:10',
   },
   {
@@ -125,6 +144,32 @@ export const messages: Message[] = [
     agentId: 'mona',
     text: '当前 demo 会覆盖一个真实工作流：老大提出 chat 产品方向，我调度 Rune 和 Iris，共同产出结构方案，并把规则沉淀进项目记忆。',
     meta: '07:11',
+    references: {
+      files: ['chat/PRODUCT.md'],
+      memories: ['Agent identity uses OKLCH accent system'],
+    },
+  },
+  {
+    id: '8',
+    sender: 'system',
+    kind: 'memory-event',
+    title: 'Project memory updated',
+    text: '2 agreements were promoted into project memory: default multi-agent rooms, and contextual side panels.',
+    meta: '07:12',
+  },
+  {
+    id: '9',
+    sender: 'agent',
+    agentId: 'mona',
+    kind: 'summary',
+    title: 'Current synthesis',
+    text: 'We now have a single-page demo structure: left project threads, center multi-agent chat, and a right rail that expands into Files or Memory when the conversation calls for it.',
+    meta: '07:13',
+    references: {
+      files: ['chat/src/styles/app.css'],
+      memories: ['Default room is multi-agent', 'Memory expands only when triggered'],
+      agents: ['rune', 'iris'],
+    },
   },
 ]
 
@@ -134,7 +179,8 @@ export const files: FileItem[] = [
     path: '/projects/chat/PRODUCT.md',
     status: 'created',
     updatedBy: 'Mona',
-    preview: '+ Define chat-native workflow as the primary interaction model.\n+ Default rooms support multi-agent participation.',
+    preview:
+      '+ Define chat-native workflow as the primary interaction model.\n+ Default rooms support multi-agent participation.',
   },
   {
     name: 'chat/src/mock/agents.ts',
@@ -157,18 +203,21 @@ export const memories: MemoryItem[] = [
     title: 'Default room is multi-agent',
     scope: 'project',
     updatedBy: 'Mona',
-    summary: 'Every project chat starts as a multi-agent room. New agents can be invited into the same thread instead of spawning isolated chats.',
+    summary:
+      'Every project chat starts as a multi-agent room. New agents can be invited into the same thread instead of spawning isolated chats.',
   },
   {
     title: 'Agent identity uses OKLCH accent system',
     scope: 'project',
     updatedBy: 'Rune',
-    summary: 'Accent color drives avatar ring, message rail, ownership chip, and single-agent conversation tint.',
+    summary:
+      'Accent color drives avatar ring, message rail, ownership chip, and single-agent conversation tint.',
   },
   {
     title: 'Memory expands only when triggered',
     scope: 'session',
     updatedBy: 'Iris',
-    summary: 'The memory panel stays collapsed until a message references, promotes, or edits memory.',
+    summary:
+      'The memory panel stays collapsed until a message references, promotes, or edits memory.',
   },
 ]

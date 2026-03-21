@@ -19,6 +19,21 @@ function App() {
           </p>
         </div>
 
+        <section className="sidebar-section project-overview">
+          <div className="section-label">Live room</div>
+          <div className="overview-card">
+            <div>
+              <strong>opencloud talk UI A</strong>
+              <p className="muted">Three agents are working in the same project chat.</p>
+            </div>
+            <div className="mini-stack">
+              {agents.map((agent) => (
+                <span className="mini-agent" key={agent.id} style={{ '--agent-accent': agent.accent } as React.CSSProperties} />
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section className="sidebar-section">
           <div className="section-label">Project</div>
           <button className="thread active"># project chat</button>
@@ -32,7 +47,7 @@ function App() {
         <section className="sidebar-section">
           <div className="section-label">Agents</div>
           {agents.map((agent) => (
-            <div className="agent-row" key={agent.id}>
+            <div className="agent-row" key={agent.id} style={{ '--agent-accent': agent.accent } as React.CSSProperties}>
               <span className="agent-dot" style={{ background: agent.accent }} />
               <div>
                 <div className="agent-name">{agent.name}</div>
@@ -40,6 +55,7 @@ function App() {
                   {agent.role} · {agent.status}
                 </div>
               </div>
+              <span className="memory-chip">{agent.memoryScope}</span>
             </div>
           ))}
         </section>
@@ -50,12 +66,27 @@ function App() {
           <div>
             <div className="eyebrow">Project Chat</div>
             <h2>opencloud talk UI A</h2>
+            <p className="muted header-copy">
+              A single room where Mona orchestrates, Rune shapes the UI shell, and Iris promotes stable agreements into memory.
+            </p>
           </div>
           <div className="header-chips">
             <span className="chip strong">3 agents active</span>
+            <span className="chip">default multi-agent room</span>
             <span className="chip">files + memory contextual</span>
           </div>
         </header>
+
+        <section className="active-strip">
+          <div className="strip-card">
+            <div className="section-label">Current objective</div>
+            <strong>Make the chat demo feel like a real agent workspace, not a Discord clone.</strong>
+          </div>
+          <div className="strip-card">
+            <div className="section-label">State</div>
+            <strong>{panelMode === 'files' ? 'Files rail is expanded' : 'Memory rail is expanded'}</strong>
+          </div>
+        </section>
 
         <div className="chat-stream">
           {messages.map((message) => {
@@ -70,7 +101,7 @@ function App() {
 
             if (message.sender === 'system') {
               return (
-                <article className="system-block" key={message.id}>
+                <article className={`system-block ${message.kind ?? ''}`} key={message.id}>
                   <div className="system-title">{message.title}</div>
                   <p>{message.text}</p>
                 </article>
@@ -85,6 +116,7 @@ function App() {
                 style={{
                   '--agent-accent': agent.accent,
                   '--agent-soft': agent.accentSoft,
+                  '--agent-surface': agent.accentSurface,
                 } as React.CSSProperties}
               >
                 <div className="message-meta">
@@ -95,13 +127,34 @@ function App() {
                   <span>{agent.role}</span>
                   <span>{message.meta}</span>
                 </div>
-                {message.kind === 'task' ? (
+
+                {message.kind === 'task' || message.kind === 'summary' ? (
                   <div className="task-card">
                     <div className="task-title">{message.title}</div>
                     <p>{message.text}</p>
                   </div>
                 ) : (
                   <p>{message.text}</p>
+                )}
+
+                {message.references && (
+                  <div className="reference-row">
+                    {message.references.files?.map((file) => (
+                      <span className="reference-chip file" key={file}>
+                        file · {file}
+                      </span>
+                    ))}
+                    {message.references.memories?.map((memory) => (
+                      <span className="reference-chip memory" key={memory}>
+                        memory · {memory}
+                      </span>
+                    ))}
+                    {message.references.agents?.map((agentRef) => (
+                      <span className="reference-chip agent" key={agentRef}>
+                        agent · {agents.find((item) => item.id === agentRef)?.name ?? agentRef}
+                      </span>
+                    ))}
+                  </div>
                 )}
               </article>
             )
@@ -111,7 +164,9 @@ function App() {
         <footer className="composer">
           <div>
             <div className="section-label">Prompting this room</div>
-            <div className="composer-text">Ask Mona to plan, delegate to Rune and Iris, or inspect files and project memory.</div>
+            <div className="composer-text">
+              Ask Mona to plan, delegate to Rune and Iris, or inspect files and project memory.
+            </div>
           </div>
           <button className="compose-button">Invite another agent</button>
         </footer>
@@ -133,6 +188,7 @@ function App() {
               <div className="eyebrow">Triggered by context</div>
               <h3>Files in play</h3>
               <p className="muted">Visible because Mona referenced working files during planning.</p>
+              <div className="callout files">Triggered by Mona referencing 3 files</div>
             </div>
             <div className="panel-list">
               {files.map((file) => (
@@ -153,6 +209,7 @@ function App() {
               <div className="eyebrow">Project memory</div>
               <h3>Remembered agreements</h3>
               <p className="muted">Long-term rules promoted from the active conversation.</p>
+              <div className="callout memory">Project memory updated by Mona and Iris</div>
             </div>
             <div className="panel-list">
               {memories.map((memory) => (
