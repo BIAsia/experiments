@@ -93,7 +93,7 @@ function App() {
             if (message.sender === 'owner') {
               return (
                 <article className="message owner" key={message.id}>
-                  <div className="message-meta">老大 · {message.meta}</div>
+                  <div className="message-meta">Owner · {message.meta}</div>
                   <p>{message.text}</p>
                 </article>
               )
@@ -172,7 +172,7 @@ function App() {
         </footer>
       </main>
 
-      <aside className="context-panel">
+      <aside className={`context-panel ${panelMode}`}>
         <div className="panel-toggle">
           <button className={panelMode === 'files' ? 'active' : ''} onClick={() => setPanelMode('files')}>
             Files

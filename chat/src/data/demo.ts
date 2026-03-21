@@ -83,14 +83,14 @@ export const messages: Message[] = [
   {
     id: '1',
     sender: 'owner',
-    text: '做一个基于 OpenCloud 的 chat-native workflow demo。默认是 multi-agent room，文件系统和记忆系统按上下文展开。',
+    text: 'Build a chat-native workflow demo for OpenCloud. The default room should support multiple agents, and file system plus memory should expand contextually beside the conversation.',
     meta: '07:05',
   },
   {
     id: '2',
     sender: 'agent',
     agentId: 'mona',
-    text: '收到。我先把产品骨架收敛成一个主 chat 页面，然后把 Files / Memory 做成由消息触发的扩展状态。',
+    text: 'Understood. I will reduce the product to a single project chat first, then turn Files and Memory into contextual states triggered by the conversation itself.',
     meta: '07:06',
     references: {
       agents: ['rune', 'iris'],
@@ -103,7 +103,7 @@ export const messages: Message[] = [
     agentId: 'mona',
     kind: 'task',
     title: 'Delegated work',
-    text: 'Rune 负责 UI shell 与 component hierarchy；Iris 负责 memory / file semantics；我来汇总成 demo narrative。',
+    text: 'Rune will shape the UI shell and component hierarchy. Iris will define memory and file semantics. I will synthesize everything into a coherent demo narrative.',
     meta: '07:07',
     references: {
       agents: ['rune', 'iris'],
@@ -113,7 +113,7 @@ export const messages: Message[] = [
     id: '4',
     sender: 'agent',
     agentId: 'rune',
-    text: '建议用 Discord-like 左侧组织，但中间 timeline 保持 chat-native。Files 和 Memory 不常驻，以 contextual rail 的方式展开。',
+    text: 'I recommend a Discord-like project rail on the left, while the center stays purely chat-native. Files and Memory should not live as permanent destinations, but as contextual rails that expand when needed.',
     meta: '07:08',
     references: {
       files: ['chat/src/App.tsx'],
@@ -124,7 +124,7 @@ export const messages: Message[] = [
     id: '5',
     sender: 'agent',
     agentId: 'iris',
-    text: 'Project memory 可以先只分两层：short-term context 与 long-term agreements。更新时展示 changed by 与 scope，会很清楚。',
+    text: 'Project memory can begin with only two layers: short-term context and long-term agreements. Showing scope and changed-by metadata will make the system feel legible instead of mysterious.',
     meta: '07:09',
     references: {
       memories: ['Default room is multi-agent', 'Memory expands only when triggered'],
@@ -135,14 +135,14 @@ export const messages: Message[] = [
     sender: 'system',
     kind: 'file-event',
     title: 'Files panel activated',
-    text: 'Mona referenced 3 working files while shaping the project chat shell and agent color system.',
+    text: 'Mona referenced three working files while shaping the project chat shell and agent color system.',
     meta: '07:10',
   },
   {
     id: '7',
     sender: 'agent',
     agentId: 'mona',
-    text: '当前 demo 会覆盖一个真实工作流：老大提出 chat 产品方向，我调度 Rune 和 Iris，共同产出结构方案，并把规则沉淀进项目记忆。',
+    text: 'This demo now covers a believable workflow: the owner defines a new chat product, I orchestrate Rune and Iris, and the resulting rules are promoted into project memory instead of disappearing into the scroll.',
     meta: '07:11',
     references: {
       files: ['chat/PRODUCT.md'],
@@ -154,7 +154,7 @@ export const messages: Message[] = [
     sender: 'system',
     kind: 'memory-event',
     title: 'Project memory updated',
-    text: '2 agreements were promoted into project memory: default multi-agent rooms, and contextual side panels.',
+    text: 'Two agreements were promoted into project memory: default multi-agent rooms and contextual side panels.',
     meta: '07:12',
   },
   {
@@ -163,7 +163,7 @@ export const messages: Message[] = [
     agentId: 'mona',
     kind: 'summary',
     title: 'Current synthesis',
-    text: 'We now have a single-page demo structure: left project threads, center multi-agent chat, and a right rail that expands into Files or Memory when the conversation calls for it.',
+    text: 'The current structure is a single-page workspace: project threads on the left, a multi-agent chat timeline in the center, and a right rail that expands into Files or Memory whenever the discussion makes that context relevant.',
     meta: '07:13',
     references: {
       files: ['chat/src/styles/app.css'],

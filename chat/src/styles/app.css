@@ -22,6 +22,36 @@ body {
   min-height: 100vh;
 }
 
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulseAccent {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--agent-accent) 18%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 8px color-mix(in oklab, var(--agent-accent) 8%, transparent);
+  }
+}
+
 button {
   font: inherit;
   cursor: pointer;
@@ -46,6 +76,7 @@ button {
   border: 1px solid var(--line);
   border-radius: 28px;
   box-shadow: var(--shadow);
+  animation: fadeUp 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .sidebar {
@@ -139,6 +170,7 @@ p {
   margin-left: -4px;
   border: 2px solid white;
   background: var(--agent-accent);
+  animation: pulseAccent 2.8s ease-in-out infinite;
 }
 
 .thread {
@@ -157,6 +189,17 @@ p {
   transform: translateX(2px);
 }
 
+.thread,
+.compose-button,
+.panel-toggle button,
+.reference-chip,
+.callout,
+.panel-card,
+.agent-row,
+.strip-card {
+  transition: transform 220ms ease, background 220ms ease, border-color 220ms ease, box-shadow 220ms ease, opacity 220ms ease;
+}
+
 .agent-row {
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -166,6 +209,11 @@ p {
   border-radius: 16px;
   background: linear-gradient(135deg, color-mix(in oklab, var(--agent-accent) 8%, white), transparent 72%);
   border: 1px solid color-mix(in oklab, var(--agent-accent) 16%, var(--line));
+}
+
+.agent-row:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px color-mix(in oklab, var(--agent-accent) 10%, transparent);
 }
 
 .agent-dot {
@@ -253,7 +301,18 @@ p {
   border-radius: 24px;
   padding: 16px 18px;
   max-width: 88%;
+  animation: fadeUp 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
+
+.chat-stream > *:nth-child(1) { animation-delay: 40ms; }
+.chat-stream > *:nth-child(2) { animation-delay: 80ms; }
+.chat-stream > *:nth-child(3) { animation-delay: 120ms; }
+.chat-stream > *:nth-child(4) { animation-delay: 160ms; }
+.chat-stream > *:nth-child(5) { animation-delay: 200ms; }
+.chat-stream > *:nth-child(6) { animation-delay: 240ms; }
+.chat-stream > *:nth-child(7) { animation-delay: 280ms; }
+.chat-stream > *:nth-child(8) { animation-delay: 320ms; }
+.chat-stream > *:nth-child(9) { animation-delay: 360ms; }
 
 .message.owner {
   margin-left: auto;
@@ -269,6 +328,11 @@ p {
   background: linear-gradient(135deg, var(--agent-soft), white 60%);
   border: 1px solid color-mix(in oklab, var(--agent-accent) 26%, var(--line));
   position: relative;
+}
+
+.message.agent:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 32px color-mix(in oklab, var(--agent-accent) 14%, transparent);
 }
 
 .message.agent::before {
@@ -412,6 +476,16 @@ p {
   background: oklch(0.975 0.016 320);
 }
 
+.context-panel.files .callout.files,
+.context-panel.memory .callout.memory {
+  animation: fadeUp 300ms ease both;
+}
+
+.context-panel.files .panel-card,
+.context-panel.memory .panel-card {
+  animation: fadeUp 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
 .panel-list {
   display: flex;
   flex-direction: column;
@@ -513,5 +587,15 @@ pre {
   .active-strip {
     flex-direction: column;
     grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
   }
 }
