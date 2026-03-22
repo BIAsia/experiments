@@ -211,7 +211,7 @@ body {
 }
 
 .agent-role.active {
-  opacity: 0.5;
+  opacity: 0.65;
 }
 
 .agent-role.working {
@@ -294,6 +294,17 @@ body {
   display: flex;
   flex: 1;
   min-height: 0;
+}
+
+.content-columns.mode-file .chat-area,
+.content-columns.mode-memory .chat-area {
+  flex: 0 0 576px;
+  max-width: 576px;
+}
+
+.content-columns.mode-file .right-panel,
+.content-columns.mode-memory .right-panel {
+  width: 420px;
 }
 
 /* ===== Chat Area ===== */
@@ -673,6 +684,10 @@ body {
   gap: 8px;
 }
 
+.panel-objectives.compact {
+  gap: 4px;
+}
+
 .panel-timeline-list,
 .panel-stack {
   display: flex;
@@ -775,9 +790,18 @@ body {
   opacity: 0.3;
 }
 
+.panel-objectives.compact .objective-row.done .objective-label {
+  opacity: 0.55;
+}
+
 .objective-row.current .objective-label {
   opacity: 0.8;
   font-weight: 500;
+}
+
+.compact-label {
+  font-size: 13px;
+  line-height: 18px;
 }
 
 .objective-dot {
