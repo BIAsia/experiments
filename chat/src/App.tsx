@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { agents, files, memories, messages, threads } from './data/demo'
+import { agents, files, memories, messages, phases, threadObjective, threads } from './data/demo'
 import './styles/app.css'
 
 type PanelMode = 'files' | 'memory'
@@ -7,6 +7,7 @@ type PanelMode = 'files' | 'memory'
 function App() {
   const [panelMode, setPanelMode] = useState<PanelMode>('files')
   const activeAgent = useMemo(() => agents[0], [])
+  const currentPhase = phases.find((phase) => phase.status === 'active')
 
   return (
     <div className="app-shell">
@@ -15,7 +16,7 @@ function App() {
           <div className="eyebrow">OpenCloud Demo</div>
           <h1>chat</h1>
           <p className="muted">
-            A chat-native workspace for multi-agent execution, files, and memory.
+            A chat-native workspace for multi-agent execution, files, memory, and thread-level progress.
           </p>
         </div>
 
@@ -32,6 +33,26 @@ function App() {
               ))}
             </div>
           </div>
+        </section>
+
+        <section className="sidebar-section objective-panel">
+          <div className="section-label">Thread objective</div>
+          <div className="objective-card">
+            <strong>{threadObjective}</strong>
+          </div>
+        </section>
+
+        <section className="sidebar-section milestone-panel">
+          <div className="section-label">Objective timeline</div>
+          {phases.map((phase) => (
+            <div className={`phase-row ${phase.status}`} key={phase.id}>
+              <div className="phase-head">
+                <strong>{phase.label}</strong>
+                <span>{phase.range}</span>
+              </div>
+              <p>{phase.objective}</p>
+            </div>
+          ))}
         </section>
 
         <section className="sidebar-section">
@@ -73,17 +94,17 @@ function App() {
           <div className="header-chips">
             <span className="chip strong">3 agents active</span>
             <span className="chip">default multi-agent room</span>
-            <span className="chip">files + memory contextual</span>
+            <span className="chip">timeline-aware thread</span>
           </div>
         </header>
 
         <section className="active-strip">
           <div className="strip-card">
             <div className="section-label">Current objective</div>
-            <strong>Make the chat demo feel like a real agent workspace, not a Discord clone.</strong>
+            <strong>{currentPhase?.objective}</strong>
           </div>
           <div className="strip-card">
-            <div className="section-label">State</div>
+            <div className="section-label">Current state</div>
             <strong>{panelMode === 'files' ? 'Files rail is expanded' : 'Memory rail is expanded'}</strong>
           </div>
         </section>
@@ -165,7 +186,7 @@ function App() {
           <div>
             <div className="section-label">Prompting this room</div>
             <div className="composer-text">
-              Ask Mona to plan, delegate to Rune and Iris, or inspect files and project memory.
+              Ask Mona to plan, delegate to Rune and Iris, review the thread timeline, or inspect files and project memory.
             </div>
           </div>
           <button className="compose-button">Invite another agent</button>
@@ -187,8 +208,8 @@ function App() {
             <div className="panel-header">
               <div className="eyebrow">Triggered by context</div>
               <h3>Files in play</h3>
-              <p className="muted">Visible because Mona referenced working files during planning.</p>
-              <div className="callout files">Triggered by Mona referencing 3 files</div>
+              <p className="muted">Visible because the thread referenced working files across multiple phases.</p>
+              <div className="callout files">Triggered by Mona referencing 3 files across 2 milestones</div>
             </div>
             <div className="panel-list">
               {files.map((file) => (
@@ -208,8 +229,8 @@ function App() {
             <div className="panel-header">
               <div className="eyebrow">Project memory</div>
               <h3>Remembered agreements</h3>
-              <p className="muted">Long-term rules promoted from the active conversation.</p>
-              <div className="callout memory">Project memory updated by Mona and Iris</div>
+              <p className="muted">Long-term rules promoted from the active conversation and preserved across phases.</p>
+              <div className="callout memory">Project memory updated by Mona, Rune, and Iris over time</div>
             </div>
             <div className="panel-list">
               {memories.map((memory) => (

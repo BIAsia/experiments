@@ -9,11 +9,19 @@ export type Agent = {
   status: 'idle' | 'thinking' | 'running' | 'blocked' | 'done'
 }
 
+export type Phase = {
+  id: string
+  label: string
+  range: string
+  objective: string
+  status: 'done' | 'active' | 'up-next'
+}
+
 export type Message = {
   id: string
   sender: 'owner' | 'agent' | 'system'
   agentId?: string
-  kind?: 'text' | 'task' | 'summary' | 'file-event' | 'memory-event'
+  kind?: 'text' | 'task' | 'summary' | 'file-event' | 'memory-event' | 'phase'
   title?: string
   text: string
   meta?: string
@@ -38,6 +46,40 @@ export type MemoryItem = {
   updatedBy: string
   summary: string
 }
+
+export const threadObjective =
+  'Turn this thread into a believable product-design workspace for a chat-native, multi-agent OpenCloud experience, with enough timeline depth to show how decisions accumulate over time.'
+
+export const phases: Phase[] = [
+  {
+    id: 'phase-1',
+    label: 'Phase 1',
+    range: 'Mar 18 · framing',
+    objective: 'Define what this chat product is really for and reduce the demo to one credible page.',
+    status: 'done',
+  },
+  {
+    id: 'phase-2',
+    label: 'Phase 2',
+    range: 'Mar 19 · structure',
+    objective: 'Lock the project-chat layout, agent roles, and the rule that files and memory expand contextually.',
+    status: 'done',
+  },
+  {
+    id: 'phase-3',
+    label: 'Phase 3',
+    range: 'Mar 22 · realism',
+    objective: 'Make the thread feel lived-in with real progress, time gaps, and a visible chain of objectives.',
+    status: 'active',
+  },
+  {
+    id: 'phase-4',
+    label: 'Up next',
+    range: 'Next pass',
+    objective: 'Add single-agent DM mode and stronger transitions between message references and contextual rails.',
+    status: 'up-next',
+  },
+]
 
 export const agents: Agent[] = [
   {
@@ -82,91 +124,121 @@ export const threads = [
 export const messages: Message[] = [
   {
     id: '1',
-    sender: 'owner',
-    text: 'Build a chat-native workflow demo for OpenCloud. The default room should support multiple agents, and file system plus memory should expand contextually beside the conversation.',
-    meta: '07:05',
+    sender: 'system',
+    kind: 'phase',
+    title: 'Phase 1 · Product framing',
+    text: 'Initial scope definition. The room is still trying to decide whether this should behave like a messenger, a terminal, or a workspace.',
+    meta: 'Mar 18 · 09:10',
   },
   {
     id: '2',
+    sender: 'owner',
+    text: 'Build a chat-native workflow demo for OpenCloud. The default room should support multiple agents, and file system plus memory should expand contextually beside the conversation.',
+    meta: 'Mar 18 · 09:12',
+  },
+  {
+    id: '3',
     sender: 'agent',
     agentId: 'mona',
-    text: 'Understood. I will reduce the product to a single project chat first, then turn Files and Memory into contextual states triggered by the conversation itself.',
-    meta: '07:06',
+    text: 'Understood. I want to reduce the whole concept to one believable project chat first, then let Files and Memory appear as contextual states instead of separate destinations.',
+    meta: 'Mar 18 · 09:15',
     references: {
       agents: ['rune', 'iris'],
       memories: ['Project memory', 'Session context'],
     },
   },
   {
-    id: '3',
+    id: '4',
     sender: 'agent',
     agentId: 'mona',
     kind: 'task',
     title: 'Delegated work',
     text: 'Rune will shape the UI shell and component hierarchy. Iris will define memory and file semantics. I will synthesize everything into a coherent demo narrative.',
-    meta: '07:07',
+    meta: 'Mar 18 · 09:18',
     references: {
       agents: ['rune', 'iris'],
     },
   },
   {
-    id: '4',
+    id: '5',
+    sender: 'system',
+    kind: 'phase',
+    title: 'Phase 2 · Structure lock',
+    text: 'The thread moves from abstract product talk into concrete decisions: layout, rails, mock agents, and what counts as durable memory.',
+    meta: 'Mar 19 · 14:00',
+  },
+  {
+    id: '6',
     sender: 'agent',
     agentId: 'rune',
     text: 'I recommend a Discord-like project rail on the left, while the center stays purely chat-native. Files and Memory should not live as permanent destinations, but as contextual rails that expand when needed.',
-    meta: '07:08',
+    meta: 'Mar 19 · 14:08',
     references: {
       files: ['chat/src/App.tsx'],
       memories: ['UI shell principle'],
     },
   },
   {
-    id: '5',
+    id: '7',
     sender: 'agent',
     agentId: 'iris',
     text: 'Project memory can begin with only two layers: short-term context and long-term agreements. Showing scope and changed-by metadata will make the system feel legible instead of mysterious.',
-    meta: '07:09',
+    meta: 'Mar 19 · 14:16',
     references: {
       memories: ['Default room is multi-agent', 'Memory expands only when triggered'],
     },
   },
   {
-    id: '6',
+    id: '8',
     sender: 'system',
     kind: 'file-event',
     title: 'Files panel activated',
     text: 'Mona referenced three working files while shaping the project chat shell and agent color system.',
-    meta: '07:10',
+    meta: 'Mar 19 · 14:24',
   },
   {
-    id: '7',
+    id: '9',
+    sender: 'system',
+    kind: 'memory-event',
+    title: 'Project memory updated',
+    text: 'Two agreements were promoted into project memory: default multi-agent rooms and contextual side panels.',
+    meta: 'Mar 19 · 14:32',
+  },
+  {
+    id: '10',
+    sender: 'system',
+    kind: 'phase',
+    title: 'Phase 3 · Realism pass',
+    text: 'The objective shifts from “can the layout work?” to “does this thread feel like a real collaboration with time, iteration, and evolving goals?”',
+    meta: 'Mar 22 · 07:05',
+  },
+  {
+    id: '11',
     sender: 'agent',
     agentId: 'mona',
     text: 'This demo now covers a believable workflow: the owner defines a new chat product, I orchestrate Rune and Iris, and the resulting rules are promoted into project memory instead of disappearing into the scroll.',
-    meta: '07:11',
+    meta: 'Mar 22 · 07:11',
     references: {
       files: ['chat/PRODUCT.md'],
       memories: ['Agent identity uses OKLCH accent system'],
     },
   },
   {
-    id: '8',
-    sender: 'system',
-    kind: 'memory-event',
-    title: 'Project memory updated',
-    text: 'Two agreements were promoted into project memory: default multi-agent rooms and contextual side panels.',
-    meta: '07:12',
+    id: '12',
+    sender: 'owner',
+    text: 'Expand the content so the thread feels more real. I want visible time progression, and I want the current objective to sit within a longer objective timeline.',
+    meta: 'Mar 22 · 08:38',
   },
   {
-    id: '9',
+    id: '13',
     sender: 'agent',
     agentId: 'mona',
     kind: 'summary',
     title: 'Current synthesis',
-    text: 'The current structure is a single-page workspace: project threads on the left, a multi-agent chat timeline in the center, and a right rail that expands into Files or Memory whenever the discussion makes that context relevant.',
-    meta: '07:13',
+    text: 'The thread objective is now explicit: build a convincing multi-agent chat workspace with enough history to show how decisions accumulate. Earlier objectives remain visible as milestones, and the current pass focuses on realism rather than only layout.',
+    meta: 'Mar 22 · 08:42',
     references: {
-      files: ['chat/src/styles/app.css'],
+      files: ['chat/src/styles/app.css', 'chat/src/data/demo.ts'],
       memories: ['Default room is multi-agent', 'Memory expands only when triggered'],
       agents: ['rune', 'iris'],
     },
@@ -180,21 +252,21 @@ export const files: FileItem[] = [
     status: 'created',
     updatedBy: 'Mona',
     preview:
-      '+ Define chat-native workflow as the primary interaction model.\n+ Default rooms support multi-agent participation.',
+      '+ Define chat-native workflow as the primary interaction model.\n+ Default rooms support multi-agent participation.\n+ Use the thread timeline itself as proof of product realism.',
   },
   {
     name: 'chat/src/mock/agents.ts',
     path: '/projects/chat/src/mock/agents.ts',
     status: 'modified',
     updatedBy: 'Rune',
-    preview: '+ add OKLCH accent tokens for Mona / Rune / Iris\n+ expose memoryScope and runtime status per agent',
+    preview: '+ add OKLCH accent tokens for Mona / Rune / Iris\n+ expose memoryScope and runtime status per agent\n+ use thread milestones to explain who did what, and when',
   },
   {
     name: 'chat/MEMORY_RULES.md',
     path: '/projects/chat/MEMORY_RULES.md',
     status: 'referenced',
     updatedBy: 'Iris',
-    preview: 'Long-term memory should only capture agreed rules, not every conversational detail.',
+    preview: 'Long-term memory should only capture agreed rules, not every conversational detail. Timeline milestones can index major decisions without bloating memory.',
   },
 ]
 
