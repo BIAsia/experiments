@@ -392,6 +392,15 @@ body {
 .msg-row {
   display: flex;
   gap: 12px;
+  transition: transform 220ms ease, opacity 220ms ease;
+}
+
+.msg-focus {
+  transform: translateX(6px);
+}
+
+.msg-focus .msg-bubble {
+  box-shadow: 0 0 0 2px #E7E7E7;
 }
 
 .msg-row.owner {
@@ -679,6 +688,13 @@ body {
   padding: 14px 0;
   border-top: 1px solid #F2F2F2;
   transition: background 220ms ease, transform 220ms ease, border-color 220ms ease;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+  text-align: left;
+  width: 100%;
+  background: transparent;
+  cursor: pointer;
 }
 
 .timeline-card.highlighted,

@@ -38,6 +38,7 @@ export type TimelineEvent = {
   time: string
   description: string
   linkedObjective?: string
+  sourceMessageId: string
 }
 
 export type FileArtifact = {
@@ -45,6 +46,7 @@ export type FileArtifact = {
   status: 'created' | 'updated' | 'referenced'
   time: string
   summary: string
+  sourceMessageId: string
 }
 
 export type MemoryRecord = {
@@ -53,6 +55,7 @@ export type MemoryRecord = {
   updatedBy: string
   time: string
   summary: string
+  sourceMessageId: string
 }
 
 export const threadTitle = 'Build a chat-native workflow demo'
@@ -226,24 +229,28 @@ export const timelineEvents: TimelineEvent[] = [
     time: 'Mar 18 · 09:12',
     description: 'The initial request defined the room as a multi-agent chat-native workspace rather than a generic messenger.',
     linkedObjective: 'Product framing',
+    sourceMessageId: '1',
   },
   {
     title: 'Layout direction locked',
     time: 'Mar 19 · 14:08',
     description: 'The team aligned on a Discord-like rail, a central conversation stream, and a reusable right-side context shell.',
     linkedObjective: 'Structure lock',
+    sourceMessageId: '3',
   },
   {
     title: 'Context model clarified',
     time: 'Mar 19 · 14:16',
     description: 'Memory was reduced to durable agreements, while files were reframed as working artifacts tied to milestones.',
     linkedObjective: 'Structure lock',
+    sourceMessageId: '4',
   },
   {
     title: 'Realism pass started',
     time: 'Mar 22 · 09:31',
     description: 'The thread began shifting from concept explanation to lived-in collaboration, with visible objectives, history, and evolving panel content.',
     linkedObjective: 'Realism pass',
+    sourceMessageId: '6',
   },
 ]
 
@@ -253,18 +260,21 @@ export const fileArtifacts: FileArtifact[] = [
     status: 'updated',
     time: 'Mar 22 · 09:34',
     summary: 'Reworked the right rail so Timeline, File, and Memory produce distinct content states under the same visual shell.',
+    sourceMessageId: '7',
   },
   {
     name: 'chat/src/data/demo.ts',
     status: 'updated',
     time: 'Mar 22 · 09:41',
     summary: 'Expanded the thread into a multi-day narrative with milestones, richer references, and panel-specific content.',
+    sourceMessageId: '6',
   },
   {
     name: 'chat/PRODUCT.md',
     status: 'referenced',
     time: 'Mar 22 · 09:46',
     summary: 'Used as the stable source for the overall product goal and the definition of contextual side panels.',
+    sourceMessageId: '2',
   },
 ]
 
@@ -275,6 +285,7 @@ export const memoryRecords: MemoryRecord[] = [
     updatedBy: 'Mona',
     time: 'Mar 18 · 09:16',
     summary: 'The project assumes collaboration between several named agents inside one thread rather than separate chats.',
+    sourceMessageId: '2',
   },
   {
     title: 'The right rail changes by mode',
@@ -282,6 +293,7 @@ export const memoryRecords: MemoryRecord[] = [
     updatedBy: 'Rune',
     time: 'Mar 22 · 09:34',
     summary: 'Timeline, File, and Memory must each reveal a different model of the same thread, not just swap a heading.',
+    sourceMessageId: '7',
   },
   {
     title: 'Memory should preserve rules, not chatter',
@@ -289,6 +301,7 @@ export const memoryRecords: MemoryRecord[] = [
     updatedBy: 'Iris',
     time: 'Mar 22 · 09:39',
     summary: 'The memory view should surface agreements that survived discussion, rather than replaying conversational fragments.',
+    sourceMessageId: '8',
   },
 ]
 
