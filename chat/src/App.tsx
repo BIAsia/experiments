@@ -117,7 +117,6 @@ function App() {
   const [selectedReference, setSelectedReference] = useState<string | null>(null)
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null)
   const [headerCollapsed, setHeaderCollapsed] = useState(false)
-  const [hasOverflow, setHasOverflow] = useState(false)
   const { visibleMessages, typingAgent, activeAgentIds, workingAgentId } = useMessageSimulation()
   const streamEndRef = useRef<HTMLDivElement>(null)
   const messageRefs = useRef<Record<string, HTMLDivElement | null>>({})
@@ -143,36 +142,17 @@ function App() {
 
     const checkOverflow = () => {
       const overflow = node.scrollHeight > node.clientHeight + 8
-      setHasOverflow(overflow)
-      if (!overflow) {
-        setHeaderCollapsed(false)
-      } else if (node.scrollTop > 4) {
-        setHeaderCollapsed(true)
-      }
-    }
-
-    const onScroll = () => {
-      if (!hasOverflow && node.scrollHeight <= node.clientHeight + 8) {
-        setHeaderCollapsed(false)
-        return
-      }
-      if (node.scrollTop <= 4) {
-        setHeaderCollapsed(false)
-      } else {
-        setHeaderCollapsed(true)
-      }
+      setHeaderCollapsed(overflow)
     }
 
     checkOverflow()
-    node.addEventListener('scroll', onScroll)
     window.addEventListener('resize', checkOverflow)
     const t = setTimeout(checkOverflow, 80)
     return () => {
       clearTimeout(t)
-      node.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', checkOverflow)
     }
-  }, [visibleMessages.length, hasOverflow])
+  }, [visibleMessages.length])
 
   const visibleFiles = useMemo(() => fileArtifacts.slice(0, Math.min(fileArtifacts.length, Math.max(1, completedObjectives.filter((o) => o.done).length))), [completedObjectives])
   const visibleMemories = useMemo(() => memoryRecords.slice(0, Math.min(memoryRecords.length, Math.max(1, completedObjectives.filter((o) => o.done).length))), [completedObjectives])
