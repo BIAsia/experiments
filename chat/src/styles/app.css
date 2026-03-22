@@ -271,6 +271,22 @@ body {
   line-height: 18px;
 }
 
+.topbar-agent-icons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  margin-right: 12px;
+}
+
+.topbar-agent-icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .tab-switcher {
   display: flex;
   gap: 4px;
