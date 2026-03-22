@@ -33,6 +33,30 @@ export type Objective = {
   description: string
 }
 
+export type TimelineEvent = {
+  title: string
+  time: string
+  description: string
+  linkedObjective?: string
+}
+
+export type FileArtifact = {
+  name: string
+  status: 'created' | 'updated' | 'referenced'
+  time: string
+  summary: string
+}
+
+export type MemoryRecord = {
+  title: string
+  scope: 'Project' | 'Session'
+  updatedBy: string
+  time: string
+  summary: string
+}
+
+export const threadTitle = 'Build a chat-native workflow demo'
+
 export const allAgents: Agent[] = [
   {
     id: 'mona',
@@ -94,8 +118,8 @@ export const objectives: Objective[] = [
   },
   {
     label: 'Realism pass',
-    afterMessageId: '6',
-    description: 'Make the chat demo feel like a real agent workspace, not a Discord clone.',
+    afterMessageId: '8',
+    description: 'Make the thread feel lived-in, with mode-specific side panels and visible time progression.',
   },
 ]
 
@@ -129,11 +153,11 @@ export const messages: Message[] = [
     agentId: 'rune',
     delay: 3200,
     texts: [
-      'I recommend a Discord-like project rail on the left, while the center stays purely chat-native. Files and Memory should not live as permanent destinations, but as contextual rails that expand when needed.',
+      'I recommend a Discord-like project rail on the left, while the center stays purely chat-native. Timeline, File, and Memory should all reuse the same right-column shell so the UI feels consistent.',
     ],
     references: [
       { label: 'chat/src/App.tsx', icon: 'check' },
-      { label: 'memory', icon: 'check' },
+      { label: 'timeline', icon: 'check' },
     ],
   },
   {
@@ -142,7 +166,7 @@ export const messages: Message[] = [
     agentId: 'iris',
     delay: 3000,
     texts: [
-      'Project memory can begin with only two layers: short-term context and long-term agreements. Showing scope and changed-by metadata will make the system feel legible instead of mysterious.',
+      'Project memory can begin with only two layers: short-term context and long-term agreements. The memory view should read like durable rules, not like a second chat log.',
     ],
     references: [{ label: 'memory', icon: 'check' }],
   },
@@ -151,22 +175,120 @@ export const messages: Message[] = [
     sender: 'owner',
     delay: 2200,
     texts: [
-      'Expand the content so the thread feels more real. I want visible time progression, and I want the current objective to sit within a longer objective timeline',
+      'Expand the content so the thread feels more real. I want visible time progression, and I want the current objective to sit within a longer objective timeline.',
     ],
   },
   {
     id: '6',
     sender: 'agent',
     agentId: 'mona',
-    delay: 3500,
+    delay: 3300,
     texts: [
-      'The thread objective is now explicit: build a convincing multi-agent chat workspace with enough history to show how decisions accumulate. Earlier objectives remain visible as milestones, and the current pass focuses on realism rather than only layout.',
+      'Then the thread itself should expose milestones. Timeline mode can become the narrative index, while File and Memory show the artifacts and rules that survived each phase.',
     ],
     references: [
-      { label: 'Build', icon: 'rune' },
-      { label: 'Research', icon: 'iris' },
-      { label: 'updating memory...', icon: 'loading' },
+      { label: 'timeline', icon: 'check' },
+      { label: 'files', icon: 'check' },
+      { label: 'memory', icon: 'check' },
     ],
+  },
+  {
+    id: '7',
+    sender: 'agent',
+    agentId: 'rune',
+    delay: 2800,
+    texts: [
+      'I have aligned the right rail so switching modes changes the content model, not just the tab label. Timeline shows milestones, File shows artifacts, and Memory shows durable agreements.',
+    ],
+    references: [
+      { label: 'chat/src/App.tsx', icon: 'check' },
+      { label: 'chat/src/styles/app.css', icon: 'check' },
+    ],
+  },
+  {
+    id: '8',
+    sender: 'agent',
+    agentId: 'iris',
+    delay: 2900,
+    texts: [
+      'I also tightened the memory copy so it matches the UI tone. It now reads like a workspace that has been evolving for several days, not a one-shot concept dump.',
+    ],
+    references: [
+      { label: 'Project memory', icon: 'check' },
+      { label: 'updated copy...', icon: 'loading' },
+    ],
+  },
+]
+
+export const timelineEvents: TimelineEvent[] = [
+  {
+    title: 'Thread opened',
+    time: 'Mar 18 · 09:12',
+    description: 'The initial request defined the room as a multi-agent chat-native workspace rather than a generic messenger.',
+    linkedObjective: 'Product framing',
+  },
+  {
+    title: 'Layout direction locked',
+    time: 'Mar 19 · 14:08',
+    description: 'The team aligned on a Discord-like rail, a central conversation stream, and a reusable right-side context shell.',
+    linkedObjective: 'Structure lock',
+  },
+  {
+    title: 'Context model clarified',
+    time: 'Mar 19 · 14:16',
+    description: 'Memory was reduced to durable agreements, while files were reframed as working artifacts tied to milestones.',
+    linkedObjective: 'Structure lock',
+  },
+  {
+    title: 'Realism pass started',
+    time: 'Mar 22 · 09:31',
+    description: 'The thread began shifting from concept explanation to lived-in collaboration, with visible objectives, history, and evolving panel content.',
+    linkedObjective: 'Realism pass',
+  },
+]
+
+export const fileArtifacts: FileArtifact[] = [
+  {
+    name: 'chat/src/App.tsx',
+    status: 'updated',
+    time: 'Mar 22 · 09:34',
+    summary: 'Reworked the right rail so Timeline, File, and Memory produce distinct content states under the same visual shell.',
+  },
+  {
+    name: 'chat/src/data/demo.ts',
+    status: 'updated',
+    time: 'Mar 22 · 09:41',
+    summary: 'Expanded the thread into a multi-day narrative with milestones, richer references, and panel-specific content.',
+  },
+  {
+    name: 'chat/PRODUCT.md',
+    status: 'referenced',
+    time: 'Mar 22 · 09:46',
+    summary: 'Used as the stable source for the overall product goal and the definition of contextual side panels.',
+  },
+]
+
+export const memoryRecords: MemoryRecord[] = [
+  {
+    title: 'Default rooms support multiple agents',
+    scope: 'Project',
+    updatedBy: 'Mona',
+    time: 'Mar 18 · 09:16',
+    summary: 'The project assumes collaboration between several named agents inside one thread rather than separate chats.',
+  },
+  {
+    title: 'The right rail changes by mode',
+    scope: 'Project',
+    updatedBy: 'Rune',
+    time: 'Mar 22 · 09:34',
+    summary: 'Timeline, File, and Memory must each reveal a different model of the same thread, not just swap a heading.',
+  },
+  {
+    title: 'Memory should preserve rules, not chatter',
+    scope: 'Session',
+    updatedBy: 'Iris',
+    time: 'Mar 22 · 09:39',
+    summary: 'The memory view should surface agreements that survived discussion, rather than replaying conversational fragments.',
   },
 ]
 

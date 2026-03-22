@@ -1,6 +1,15 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { allAgents, messages as allMessages, objectives, projectThreads } from './data/demo'
-import type { Agent, AgentIcon, Message } from './data/demo'
+import {
+  allAgents,
+  fileArtifacts,
+  memoryRecords,
+  messages as allMessages,
+  objectives,
+  projectThreads,
+  threadTitle,
+  timelineEvents,
+} from './data/demo'
+import type { Agent, AgentIcon, FileArtifact, MemoryRecord, Message, TimelineEvent } from './data/demo'
 import { usePhysicsIcons } from './usePhysicsIcons'
 import './styles/app.css'
 
@@ -98,7 +107,6 @@ function useMessageSimulation() {
   const [visibleMessages, setVisibleMessages] = useState<Message[]>([])
   const [typingAgent, setTypingAgent] = useState<Agent | null>(null)
   const [activeAgentIds, setActiveAgentIds] = useState<Set<string>>(new Set())
-  /** The agent id that is currently "working" — either typing or just sent the latest message */
   const [workingAgentId, setWorkingAgentId] = useState<string | null>(null)
   const indexRef = useRef(0)
   const timerRef = useRef<ReturnType<typeof setTimeout>>()
@@ -106,14 +114,12 @@ function useMessageSimulation() {
   const scheduleNext = useCallback(() => {
     if (indexRef.current >= allMessages.length) {
       setTypingAgent(null)
-      // Clear working state after a beat when conversation ends
       setTimeout(() => setWorkingAgentId(null), 1200)
       return
     }
 
     const nextMsg = allMessages[indexRef.current]
 
-    // Show typing indicator for agent messages
     if (nextMsg.sender === 'agent') {
       const agent = allAgents.find((a) => a.id === nextMsg.agentId)
       if (agent) {
@@ -121,23 +127,19 @@ function useMessageSimulation() {
         setWorkingAgentId(agent.id)
       }
     } else {
-      // Owner message — no agent is working during owner typing
       setWorkingAgentId(null)
     }
 
-    // Schedule the message reveal
     timerRef.current = setTimeout(() => {
       setTypingAgent(null)
       setVisibleMessages((prev) => [...prev, nextMsg])
 
-      // If this is an agent message, add the agent to active set
       if (nextMsg.sender === 'agent' && nextMsg.agentId) {
         setActiveAgentIds((prev) => {
           const next = new Set(prev)
           next.add(nextMsg.agentId!)
           return next
         })
-        // Keep this agent as "working" briefly after sending
         setWorkingAgentId(nextMsg.agentId)
       } else {
         setWorkingAgentId(null)
@@ -145,7 +147,6 @@ function useMessageSimulation() {
 
       indexRef.current++
 
-      // Schedule a short pause before the next typing indicator
       const pauseBeforeNext = 600 + Math.random() * 400
       timerRef.current = setTimeout(() => {
         scheduleNext()
@@ -154,7 +155,6 @@ function useMessageSimulation() {
   }, [])
 
   useEffect(() => {
-    // Start after a brief initial pause
     timerRef.current = setTimeout(scheduleNext, 800)
     return () => clearTimeout(timerRef.current)
   }, [scheduleNext])
@@ -191,6 +191,88 @@ function HeaderIllustration({ activeIcons }: { activeIcons: AgentIcon[] }) {
   )
 }
 
+function TimelinePanel({
+  visibleMessageIds,
+  completedObjectives,
+}: {
+  visibleMessageIds: Set<string>
+  completedObjectives: Array<(typeof objectives)[number] & { done: boolean }>
+}) {
+  const visibleEvents = timelineEvents.filter((_, index) => index === 0 || visibleMessageIds.size > index + 1)
+
+  return (
+    <>
+      <h2 className="panel-title">{threadTitle}</h2>
+      <div className="panel-subtitle">Timeline mode turns the thread into a readable progress index.</div>
+
+      <div className="panel-timeline-list panel-block">
+        {visibleEvents.map((event) => (
+          <div className="timeline-card" key={event.title}>
+            <div className="timeline-meta">
+              <span>{event.time}</span>
+              {event.linkedObjective && <span className="timeline-link">{event.linkedObjective}</span>}
+            </div>
+            <div className="timeline-title">{event.title}</div>
+            <p className="timeline-description">{event.description}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="panel-objectives panel-block">
+        {completedObjectives.map((obj, i) => (
+          <div className={`objective-row ${obj.done ? 'done' : ''}`} key={i}>
+            {obj.done ? <CheckIcon /> : <div className="objective-dot" />}
+            <span className="objective-label">{obj.label}</span>
+          </div>
+        ))}
+      </div>
+    </>
+  )
+}
+
+function FilePanel({ items }: { items: FileArtifact[] }) {
+  return (
+    <>
+      <h2 className="panel-title">Working files</h2>
+      <div className="panel-subtitle">File mode shows the artifacts the thread keeps touching while decisions evolve.</div>
+      <div className="panel-stack panel-block">
+        {items.map((item) => (
+          <div className="context-card" key={item.name}>
+            <div className="context-head">
+              <span className={`context-badge ${item.status}`}>{item.status}</span>
+              <span className="context-time">{item.time}</span>
+            </div>
+            <div className="context-title">{item.name}</div>
+            <p className="context-copy">{item.summary}</p>
+          </div>
+        ))}
+      </div>
+    </>
+  )
+}
+
+function MemoryPanel({ items }: { items: MemoryRecord[] }) {
+  return (
+    <>
+      <h2 className="panel-title">Durable memory</h2>
+      <div className="panel-subtitle">Memory mode preserves the rules and agreements that survived the conversation.</div>
+      <div className="panel-stack panel-block">
+        {items.map((item) => (
+          <div className="context-card" key={item.title}>
+            <div className="context-head">
+              <span className="context-badge memory-scope">{item.scope}</span>
+              <span className="context-time">{item.time}</span>
+            </div>
+            <div className="context-title">{item.title}</div>
+            <p className="context-copy">{item.summary}</p>
+            <div className="context-foot">Updated by {item.updatedBy}</div>
+          </div>
+        ))}
+      </div>
+    </>
+  )
+}
+
 /* ====== Main App ====== */
 
 function App() {
@@ -198,7 +280,6 @@ function App() {
   const { visibleMessages, typingAgent, activeAgentIds, workingAgentId } = useMessageSimulation()
   const streamEndRef = useRef<HTMLDivElement>(null)
 
-  // Derive active agents from messages (ordered by first appearance)
   const activeAgents = useMemo(() => {
     const seen: Agent[] = []
     for (const id of activeAgentIds) {
@@ -208,17 +289,14 @@ function App() {
     return seen
   }, [activeAgentIds])
 
-  // Icons for the physics header — derived from active agents
   const activeIcons = useMemo<AgentIcon[]>(() => {
     return activeAgents.map((a) => a.icon)
   }, [activeAgents])
 
-  // Thread dots — derived from active agents
   const threadDots = useMemo(() => {
     return activeAgents.map((a) => a.color)
   }, [activeAgents])
 
-  // Derive objective completion from visible messages
   const visibleMessageIds = useMemo(() => {
     return new Set(visibleMessages.map((m) => m.id))
   }, [visibleMessages])
@@ -230,7 +308,6 @@ function App() {
     }))
   }, [visibleMessageIds])
 
-  // Current objective = first incomplete, or last one if all done
   const currentPhase = useMemo(() => {
     const firstIncomplete = completedObjectives.find((o) => !o.done)
     if (firstIncomplete) return firstIncomplete
@@ -241,20 +318,27 @@ function App() {
     return completedObjectives.every((o) => o.done)
   }, [completedObjectives])
 
-  // Helper: get display role for an agent
   const getAgentDisplayRole = useCallback((agent: Agent) => {
     if (workingAgentId === agent.id) return agent.roleActive
     return agent.role
   }, [workingAgentId])
 
-  // Auto-scroll to bottom when new messages appear
   useEffect(() => {
     streamEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [visibleMessages, typingAgent])
 
+  const visibleFiles = useMemo(() => {
+    const count = Math.min(fileArtifacts.length, Math.max(1, completedObjectives.filter((o) => o.done).length))
+    return fileArtifacts.slice(0, count)
+  }, [completedObjectives])
+
+  const visibleMemories = useMemo(() => {
+    const count = Math.min(memoryRecords.length, Math.max(1, completedObjectives.filter((o) => o.done).length))
+    return memoryRecords.slice(0, count)
+  }, [completedObjectives])
+
   return (
     <div className="app-shell">
-      {/* Left Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-top">
           <div className="sidebar-action">
@@ -321,9 +405,7 @@ function App() {
         </div>
       </aside>
 
-      {/* Main Content Area */}
       <div className="main-area">
-        {/* Top Bar */}
         <header className="top-bar">
           <div className="breadcrumb">
             <span className="breadcrumb-parent">OpenClaw Chat UI</span>
@@ -344,18 +426,15 @@ function App() {
         </header>
 
         <div className="content-columns">
-          {/* Chat Area */}
           <div className="chat-area">
-            {/* Chat Header */}
             <div className="chat-header">
               <div className="chat-header-text">
                 <h1>Init version</h1>
-                <div className="chat-date">Started at Mar 22, 2026</div>
+                <div className="chat-date">Started at Mar 18, 2026 · Active today</div>
               </div>
               <HeaderIllustration activeIcons={activeIcons} />
             </div>
 
-            {/* Chat Stream */}
             <div className="chat-stream">
               <div className="timestamp">Today at 09:31</div>
 
@@ -381,11 +460,7 @@ function App() {
                     <div className="msg-content">
                       <div className="msg-bubbles">
                         {message.texts.map((text, i) => (
-                          <div
-                            className="msg-bubble agent-bubble"
-                            key={i}
-                            style={{ backgroundColor: agent.bubbleColor }}
-                          >
+                          <div className="msg-bubble agent-bubble" key={i} style={{ backgroundColor: agent.bubbleColor }}>
                             <p>{text}</p>
                           </div>
                         ))}
@@ -420,11 +495,16 @@ function App() {
             </div>
           </div>
 
-          {/* Right Panel */}
           <aside className="right-panel">
-            <h2 className="panel-title">Build a chat-native workflow demo</h2>
+            {panelMode === 'timeline' && (
+              <TimelinePanel visibleMessageIds={visibleMessageIds} completedObjectives={completedObjectives} />
+            )}
 
-            <div className="panel-agents">
+            {panelMode === 'file' && <FilePanel items={visibleFiles} />}
+
+            {panelMode === 'memory' && <MemoryPanel items={visibleMemories} />}
+
+            <div className="panel-agents panel-block">
               {activeAgents.length === 0 && (
                 <div className="panel-agents-empty">Waiting for agents to join...</div>
               )}
@@ -444,20 +524,9 @@ function App() {
               })}
             </div>
 
-            <div className="panel-objectives">
-              {completedObjectives.map((obj, i) => (
-                <div className={`objective-row ${obj.done ? 'done' : ''} ${!obj.done && currentPhase?.label === obj.label ? 'current' : ''}`} key={i}>
-                  {obj.done ? <CheckIcon /> : (
-                    <div className="objective-dot" />
-                  )}
-                  <span className="objective-label">{obj.label}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="panel-current">
+            <div className="panel-current panel-block">
               <div className="current-label">Current</div>
-              <p className="current-text" key={currentPhase?.label}>
+              <p className="current-text" key={`${panelMode}-${currentPhase?.label}`}>
                 {allObjectivesDone
                   ? 'All objectives completed. The workspace is ready.'
                   : currentPhase?.description}

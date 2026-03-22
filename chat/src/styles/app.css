@@ -559,6 +559,17 @@ body {
   margin: 0;
 }
 
+.panel-subtitle {
+  font-size: 14px;
+  line-height: 22px;
+  opacity: 0.45;
+  margin-top: -20px;
+}
+
+.panel-block {
+  animation: fadeSwap 300ms ease both;
+}
+
 .panel-agents {
   display: flex;
   flex-direction: column;
@@ -627,6 +638,82 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.panel-timeline-list,
+.panel-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.timeline-card,
+.context-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 0;
+  border-top: 1px solid #F2F2F2;
+}
+
+.timeline-card:first-child,
+.context-card:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.timeline-meta,
+.context-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.timeline-link,
+.context-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 12px;
+  line-height: 14px;
+  background: #F6F6F6;
+}
+
+.context-badge.created {
+  background: #F1EDFE;
+}
+
+.context-badge.updated {
+  background: #E6FFE6;
+}
+
+.context-badge.referenced,
+.context-badge.memory-scope {
+  background: #F4F5F7;
+}
+
+.timeline-meta span,
+.context-time,
+.context-foot {
+  font-size: 12px;
+  line-height: 16px;
+  opacity: 0.4;
+}
+
+.timeline-title,
+.context-title {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.timeline-description,
+.context-copy {
+  font-size: 14px;
+  line-height: 22px;
+  opacity: 0.72;
 }
 
 .objective-row {
