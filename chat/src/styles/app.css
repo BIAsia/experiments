@@ -512,6 +512,20 @@ body {
   border-radius: 999px;
   font-size: 13px;
   line-height: 16px;
+  background: #FFFFFF;
+  cursor: pointer;
+  transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.ref-chip:hover {
+  background: #FAFAFA;
+  border-color: #E9E9E9;
+}
+
+.ref-chip.selected {
+  background: #F4F5F7;
+  border-color: #DADADA;
+  transform: translateY(-1px);
 }
 
 .ref-chip-icon {
@@ -568,6 +582,16 @@ body {
 
 .panel-block {
   animation: fadeSwap 300ms ease both;
+}
+
+.right-panel {
+  position: relative;
+}
+
+.panel-selection {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #F8F8F8;
 }
 
 .panel-agents {
@@ -654,6 +678,14 @@ body {
   gap: 8px;
   padding: 14px 0;
   border-top: 1px solid #F2F2F2;
+  transition: background 220ms ease, transform 220ms ease, border-color 220ms ease;
+}
+
+.timeline-card.highlighted,
+.context-card.highlighted {
+  background: #FAFAFA;
+  border-top-color: #E3E3E3;
+  transform: translateX(4px);
 }
 
 .timeline-card:first-child,

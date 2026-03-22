@@ -194,9 +194,11 @@ function HeaderIllustration({ activeIcons }: { activeIcons: AgentIcon[] }) {
 function TimelinePanel({
   visibleMessageIds,
   completedObjectives,
+  selectedKey,
 }: {
   visibleMessageIds: Set<string>
   completedObjectives: Array<(typeof objectives)[number] & { done: boolean }>
+  selectedKey: string | null
 }) {
   const visibleEvents = timelineEvents.filter((_, index) => index === 0 || visibleMessageIds.size > index + 1)
 
@@ -206,8 +208,10 @@ function TimelinePanel({
       <div className="panel-subtitle">Timeline mode turns the thread into a readable progress index.</div>
 
       <div className="panel-timeline-list panel-block">
-        {visibleEvents.map((event) => (
-          <div className="timeline-card" key={event.title}>
+        {visibleEvents.map((event) => {
+          const isHighlighted = !!selectedKey && `${event.title} ${event.description} ${event.linkedObjective ?? ''}`.toLowerCase().includes(selectedKey.toLowerCase())
+          return (
+          <div className={`timeline-card ${isHighlighted ? 'highlighted' : ''}`} key={event.title}>
             <div className="timeline-meta">
               <span>{event.time}</span>
               {event.linkedObjective && <span className="timeline-link">{event.linkedObjective}</span>}
@@ -215,7 +219,7 @@ function TimelinePanel({
             <div className="timeline-title">{event.title}</div>
             <p className="timeline-description">{event.description}</p>
           </div>
-        ))}
+          )})}
       </div>
 
       <div className="panel-objectives panel-block">
@@ -230,14 +234,16 @@ function TimelinePanel({
   )
 }
 
-function FilePanel({ items }: { items: FileArtifact[] }) {
+function FilePanel({ items, selectedKey }: { items: FileArtifact[]; selectedKey: string | null }) {
   return (
     <>
       <h2 className="panel-title">Working files</h2>
       <div className="panel-subtitle">File mode shows the artifacts the thread keeps touching while decisions evolve.</div>
       <div className="panel-stack panel-block">
-        {items.map((item) => (
-          <div className="context-card" key={item.name}>
+        {items.map((item) => {
+          const isHighlighted = !!selectedKey && `${item.name} ${item.summary} ${item.status}`.toLowerCase().includes(selectedKey.toLowerCase())
+          return (
+          <div className={`context-card ${isHighlighted ? 'highlighted' : ''}`} key={item.name}>
             <div className="context-head">
               <span className={`context-badge ${item.status}`}>{item.status}</span>
               <span className="context-time">{item.time}</span>
@@ -245,20 +251,22 @@ function FilePanel({ items }: { items: FileArtifact[] }) {
             <div className="context-title">{item.name}</div>
             <p className="context-copy">{item.summary}</p>
           </div>
-        ))}
+          )})}
       </div>
     </>
   )
 }
 
-function MemoryPanel({ items }: { items: MemoryRecord[] }) {
+function MemoryPanel({ items, selectedKey }: { items: MemoryRecord[]; selectedKey: string | null }) {
   return (
     <>
       <h2 className="panel-title">Durable memory</h2>
       <div className="panel-subtitle">Memory mode preserves the rules and agreements that survived the conversation.</div>
       <div className="panel-stack panel-block">
-        {items.map((item) => (
-          <div className="context-card" key={item.title}>
+        {items.map((item) => {
+          const isHighlighted = !!selectedKey && `${item.title} ${item.summary} ${item.scope} ${item.updatedBy}`.toLowerCase().includes(selectedKey.toLowerCase())
+          return (
+          <div className={`context-card ${isHighlighted ? 'highlighted' : ''}`} key={item.title}>
             <div className="context-head">
               <span className="context-badge memory-scope">{item.scope}</span>
               <span className="context-time">{item.time}</span>
@@ -267,7 +275,7 @@ function MemoryPanel({ items }: { items: MemoryRecord[] }) {
             <p className="context-copy">{item.summary}</p>
             <div className="context-foot">Updated by {item.updatedBy}</div>
           </div>
-        ))}
+          )})}
       </div>
     </>
   )
@@ -277,6 +285,7 @@ function MemoryPanel({ items }: { items: MemoryRecord[] }) {
 
 function App() {
   const [panelMode, setPanelMode] = useState<PanelMode>('timeline')
+  const [selectedReference, setSelectedReference] = useState<string | null>(null)
   const { visibleMessages, typingAgent, activeAgentIds, workingAgentId } = useMessageSimulation()
   const streamEndRef = useRef<HTMLDivElement>(null)
 
@@ -336,6 +345,20 @@ function App() {
     const count = Math.min(memoryRecords.length, Math.max(1, completedObjectives.filter((o) => o.done).length))
     return memoryRecords.slice(0, count)
   }, [completedObjectives])
+
+  const handleReferenceClick = useCallback((label: string) => {
+    const normalized = label.toLowerCase()
+    setSelectedReference(label)
+    if (normalized.includes('memory') || normalized.includes('project memory')) {
+      setPanelMode('memory')
+      return
+    }
+    if (normalized.includes('file') || normalized.includes('src/') || normalized.includes('.ts') || normalized.includes('.md')) {
+      setPanelMode('file')
+      return
+    }
+    setPanelMode('timeline')
+  }, [])
 
   return (
     <div className="app-shell">
@@ -417,7 +440,10 @@ function App() {
               <button
                 key={mode}
                 className={`tab-btn ${panelMode === mode ? 'active' : ''}`}
-                onClick={() => setPanelMode(mode)}
+                onClick={() => {
+                  setPanelMode(mode)
+                  setSelectedReference(null)
+                }}
               >
                 {mode === 'timeline' ? 'Timeline' : mode === 'file' ? 'File' : 'Memory'}
               </button>
@@ -468,7 +494,12 @@ function App() {
                       {message.references && (
                         <div className="ref-row">
                           {message.references.map((ref, i) => (
-                            <span className="ref-chip" key={i}>
+                            <button
+                              type="button"
+                              className={`ref-chip ${selectedReference === ref.label ? 'selected' : ''}`}
+                              key={i}
+                              onClick={() => handleReferenceClick(ref.label)}
+                            >
                               {(ref.icon === 'rune' || ref.icon === 'iris' || ref.icon === 'mona' || ref.icon === 'goody' || ref.icon === 'nancy') && (
                                 <span className="ref-chip-icon"><AgentIcon icon={ref.icon} size={12} /></span>
                               )}
@@ -480,7 +511,7 @@ function App() {
                               }>
                                 {ref.label}
                               </span>
-                            </span>
+                            </button>
                           ))}
                         </div>
                       )}
@@ -497,12 +528,12 @@ function App() {
 
           <aside className="right-panel">
             {panelMode === 'timeline' && (
-              <TimelinePanel visibleMessageIds={visibleMessageIds} completedObjectives={completedObjectives} />
+              <TimelinePanel visibleMessageIds={visibleMessageIds} completedObjectives={completedObjectives} selectedKey={selectedReference} />
             )}
 
-            {panelMode === 'file' && <FilePanel items={visibleFiles} />}
+            {panelMode === 'file' && <FilePanel items={visibleFiles} selectedKey={selectedReference} />}
 
-            {panelMode === 'memory' && <MemoryPanel items={visibleMemories} />}
+            {panelMode === 'memory' && <MemoryPanel items={visibleMemories} selectedKey={selectedReference} />}
 
             <div className="panel-agents panel-block">
               {activeAgents.length === 0 && (
@@ -523,6 +554,13 @@ function App() {
                 )
               })}
             </div>
+
+            {selectedReference && (
+              <div className="panel-selection panel-block">
+                <div className="current-label">Focused reference</div>
+                <p className="current-text">{selectedReference}</p>
+              </div>
+            )}
 
             <div className="panel-current panel-block">
               <div className="current-label">Current</div>
