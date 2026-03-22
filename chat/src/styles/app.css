@@ -38,6 +38,10 @@ body {
   flex-direction: column;
   gap: 20px;
   padding: 16px 6px;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow: hidden;
 }
 
 .sidebar-top {
@@ -224,6 +228,8 @@ body {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  height: 100vh;
+  overflow: hidden;
 }
 
 /* ===== Top Bar ===== */
@@ -233,6 +239,11 @@ body {
   justify-content: space-between;
   padding: 24px 24px;
   height: 66px;
+  position: sticky;
+  top: 0;
+  background: #FFFFFF;
+  z-index: 10;
+  flex-shrink: 0;
 }
 
 .breadcrumb {
@@ -294,6 +305,7 @@ body {
   display: flex;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 
 .content-columns.mode-file .chat-area,
@@ -315,7 +327,8 @@ body {
   gap: 36px;
   padding: 0 24px;
   min-width: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .chat-header {
@@ -583,6 +596,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 32px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .panel-title {
@@ -591,13 +606,6 @@ body {
   font-weight: 500;
   line-height: 34px;
   margin: 0;
-}
-
-.panel-subtitle {
-  font-size: 14px;
-  line-height: 22px;
-  opacity: 0.45;
-  margin-top: -20px;
 }
 
 .panel-block {

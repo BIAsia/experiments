@@ -110,7 +110,7 @@ export const allAgents: Agent[] = [
 
 export const objectives: Objective[] = [
   {
-    label: 'Product framing',
+    label: 'Thread opened',
     afterMessageId: '2',
     description: 'Define what this chat product is really for and reduce the demo to one credible page.',
   },
