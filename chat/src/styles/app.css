@@ -719,6 +719,26 @@ body {
   transform: translateX(4px);
 }
 
+.timeline-card.compact {
+  padding: 8px 0;
+}
+
+.timeline-compact-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.compact-title {
+  font-size: 14px;
+  line-height: 18px;
+}
+
+.timeline-card.compact .timeline-description,
+.timeline-card.compact .timeline-meta {
+  display: none;
+}
+
 .timeline-card:first-child,
 .context-card:first-child {
   border-top: 0;
