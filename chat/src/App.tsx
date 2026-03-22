@@ -1,252 +1,268 @@
-import { useMemo, useState } from 'react'
-import { agents, files, memories, messages, phases, threadObjective, threads } from './data/demo'
+import { useState } from 'react'
+import { agents, messages, objectives, currentObjective, projectThreads } from './data/demo'
 import './styles/app.css'
 
-type PanelMode = 'files' | 'memory'
+type PanelMode = 'timeline' | 'file' | 'memory'
+
+const AgentIcon = ({ icon, size = 16 }: { icon: string; size?: number }) => {
+  switch (icon) {
+    case 'mona':
+      return (
+        <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+          <path fillRule="evenodd" clipRule="evenodd" d="M8.031 7.348C7.699 3.235 4.256 0 0.057 0C0.057 4.179 3.262 7.61 7.348 7.969C3.235 8.301 1.835e-07 11.744 0 15.943C4.179 15.943 7.61 12.738 7.969 8.652C8.301 12.765 11.744 16 15.943 16C15.943 11.821 12.738 8.39 8.652 8.031C12.765 7.699 16 4.256 16 0.057C11.821 0.057 8.39 3.262 8.031 7.348ZM8 8L8 8L8 8C8 8 8 8 8 8V8Z" fill="#BEE900" />
+        </svg>
+      )
+    case 'rune':
+      return (
+        <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+          <path fillRule="evenodd" clipRule="evenodd" d="M16 8.054L8 0L0 8.054H7.893L0 16H16L8.107 8.054H16Z" fill="#A3E8B5" />
+        </svg>
+      )
+    case 'iris':
+      return (
+        <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+          <path fillRule="evenodd" clipRule="evenodd" d="M9.387 8L16 14.64H2.535e-06L6.613 8L0 1.36H16L9.387 8Z" fill="#A7B5FF" />
+        </svg>
+      )
+    case 'goody':
+      return (
+        <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+          <path fillRule="evenodd" clipRule="evenodd" d="M10.471 3.765C10.612 3.437 10.69 3.074 10.69 2.693C10.69 1.206 9.502 0 8.036 0C6.571 0 5.383 1.206 5.383 2.693C5.383 3.074 5.461 3.437 5.601 3.765C5.119 3.091 4.337 2.653 3.453 2.653C1.988 2.653 0.8 3.859 0.8 5.347C0.8 6.675 1.748 7.779 2.994 8C1.748 8.221 0.8 9.325 0.8 10.653C0.8 12.141 1.988 13.347 3.453 13.347C4.337 13.347 5.119 12.909 5.601 12.235C5.461 12.563 5.383 12.926 5.383 13.307C5.383 14.794 6.571 16 8.036 16C9.502 16 10.69 14.794 10.69 13.307C10.69 12.926 10.612 12.563 10.471 12.235C10.953 12.909 11.736 13.347 12.619 13.347C14.085 13.347 15.272 12.141 15.272 10.653C15.272 9.325 14.325 8.221 13.078 8C14.325 7.779 15.272 6.675 15.272 5.347C15.272 3.859 14.085 2.653 12.619 2.653C11.736 2.653 10.953 3.091 10.471 3.765ZM10.184 11.725C10.044 11.397 9.966 11.034 9.966 10.653C9.966 9.325 10.913 8.221 12.16 8C10.913 7.779 9.966 6.675 9.966 5.347C9.966 4.966 10.044 4.603 10.184 4.275C9.702 4.949 8.92 5.387 8.036 5.387C7.153 5.387 6.37 4.949 5.888 4.275C6.029 4.603 6.107 4.966 6.107 5.347C6.107 6.675 5.159 7.779 3.913 8C5.159 8.221 6.107 9.325 6.107 10.653C6.107 11.034 6.029 11.397 5.888 11.725C6.37 11.051 7.153 10.613 8.036 10.613C8.92 10.613 9.702 11.051 10.184 11.725Z" fill="#FFB6E1" />
+        </svg>
+      )
+    case 'nancy':
+      return (
+        <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+          <path fillRule="evenodd" clipRule="evenodd" d="M3.497e-07 2.212e-07L6.032e-07 4L8 8L1.748e-07 12L0 16L8 12V16L16 12V8V4L8 0V4L3.497e-07 2.212e-07ZM8 4V8V12L16 8L8 4Z" fill="#E1E1E1" />
+        </svg>
+      )
+    default:
+      return null
+  }
+}
+
+const CheckIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M12.41 2.734C12.557 2.5 12.866 2.43 13.099 2.577C13.333 2.724 13.403 3.032 13.257 3.266L7.626 12.225C7.487 12.446 7.365 12.642 7.252 12.789C7.139 12.937 6.994 13.095 6.786 13.187C6.5 13.313 6.176 13.319 5.886 13.205C5.674 13.121 5.522 12.969 5.404 12.826C5.285 12.684 5.155 12.494 5.008 12.278L2.588 8.754C2.432 8.526 2.49 8.215 2.717 8.058C2.945 7.902 3.256 7.96 3.412 8.188L5.832 11.712C5.991 11.944 6.091 12.089 6.173 12.188C6.222 12.247 6.249 12.269 6.258 12.276C6.296 12.29 6.338 12.289 6.375 12.274C6.384 12.267 6.41 12.244 6.457 12.182C6.536 12.079 6.63 11.931 6.779 11.693L12.41 2.734Z" fill="#BBBBBB" />
+  </svg>
+)
+
+const LoadingIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M8 11.1C8.276 11.1 8.5 11.324 8.5 11.6V14C8.5 14.276 8.276 14.5 8 14.5C7.724 14.5 7.5 14.276 7.5 14V11.6C7.5 11.324 7.724 11.1 8 11.1ZM5.126 10.166C5.321 9.971 5.639 9.971 5.834 10.166C6.029 10.361 6.029 10.679 5.834 10.874L4.094 12.613C3.898 12.809 3.582 12.809 3.387 12.613C3.191 12.418 3.191 12.101 3.387 11.906L5.126 10.166ZM10.166 10.166C10.361 9.971 10.679 9.971 10.874 10.166L12.613 11.906C12.809 12.101 12.809 12.418 12.613 12.613C12.418 12.809 12.101 12.809 11.906 12.613L10.166 10.874C9.971 10.679 9.971 10.361 10.166 10.166ZM4.4 7.5C4.676 7.5 4.9 7.724 4.9 8C4.9 8.276 4.676 8.5 4.4 8.5H2C1.724 8.5 1.5 8.276 1.5 8C1.5 7.724 1.724 7.5 2 7.5H4.4ZM14 7.5C14.276 7.5 14.5 7.724 14.5 8C14.5 8.276 14.276 8.5 14 8.5H11.6C11.324 8.5 11.1 8.276 11.1 8C11.1 7.724 11.324 7.5 11.6 7.5H14ZM3.387 3.387C3.582 3.191 3.898 3.191 4.094 3.387L5.834 5.126C6.029 5.321 6.029 5.639 5.834 5.834C5.639 6.029 5.321 6.029 5.126 5.834L3.387 4.094C3.191 3.898 3.191 3.582 3.387 3.387ZM11.906 3.387C12.101 3.191 12.418 3.191 12.613 3.387C12.809 3.582 12.809 3.898 12.613 4.094L10.874 5.834C10.679 6.029 10.361 6.029 10.166 5.834C9.971 5.639 9.971 5.321 10.166 5.126L11.906 3.387ZM8 1.5C8.276 1.5 8.5 1.724 8.5 2V4.4C8.5 4.676 8.276 4.9 8 4.9C7.724 4.9 7.5 4.676 7.5 4.4V2C7.5 1.724 7.724 1.5 8 1.5Z" fill="#D9D9D9" />
+  </svg>
+)
+
+const PlusIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <path d="M10 2.5C10.345 2.5 10.625 2.78 10.625 3.125V9.373H16.877C17.222 9.373 17.502 9.653 17.502 9.998C17.502 10.343 17.222 10.623 16.877 10.623H10.625V16.875C10.625 17.22 10.345 17.5 10 17.5C9.655 17.5 9.375 17.22 9.375 16.875V10.623H3.127C2.782 10.623 2.502 10.343 2.502 9.998C2.502 9.653 2.782 9.373 3.127 9.373H9.375V3.125C9.375 2.78 9.655 2.5 10 2.5Z" fill="#000000" />
+  </svg>
+)
+
+const SearchIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <path fillRule="evenodd" clipRule="evenodd" d="M8.958 2.292C12.64 2.292 15.625 5.276 15.625 8.958C15.625 10.574 15.05 12.056 14.093 13.21L17.525 16.641C17.769 16.886 17.769 17.281 17.525 17.525C17.281 17.769 16.886 17.769 16.641 17.525L13.21 14.093C12.056 15.05 10.574 15.625 8.958 15.625C5.276 15.625 2.292 12.64 2.292 8.958C2.292 5.276 5.276 2.292 8.958 2.292ZM8.958 3.542C5.967 3.542 3.542 5.967 3.542 8.958C3.542 11.95 5.967 14.375 8.958 14.375C11.95 14.375 14.375 11.95 14.375 8.958C14.375 5.967 11.95 3.542 8.958 3.542Z" fill="#000000" />
+  </svg>
+)
+
+const HashIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M6.333 2L4.333 14M11.666 2L9.666 14M13.666 5.333H2.333M13 10.667H1.667" stroke="#000000" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
 
 function App() {
-  const [panelMode, setPanelMode] = useState<PanelMode>('files')
-  const activeAgent = useMemo(() => agents[0], [])
-  const currentPhase = phases.find((phase) => phase.status === 'active')
+  const [panelMode, setPanelMode] = useState<PanelMode>('timeline')
 
   return (
     <div className="app-shell">
+      {/* Left Sidebar */}
       <aside className="sidebar">
-        <div>
-          <div className="eyebrow">OpenCloud Demo</div>
-          <h1>chat</h1>
-          <p className="muted">
-            A chat-native workspace for multi-agent execution, files, memory, and thread-level progress.
-          </p>
+        <div className="sidebar-top">
+          <div className="sidebar-action">
+            <PlusIcon />
+            <span>New chat</span>
+          </div>
+          <div className="sidebar-action">
+            <SearchIcon />
+            <span>Search</span>
+          </div>
         </div>
 
-        <section className="sidebar-section project-overview">
-          <div className="section-label">Live room</div>
-          <div className="overview-card">
-            <div>
-              <strong>opencloud talk UI A</strong>
-              <p className="muted">Three agents are working in the same project chat.</p>
-            </div>
-            <div className="mini-stack">
-              {agents.map((agent) => (
-                <span className="mini-agent" key={agent.id} style={{ '--agent-accent': agent.accent } as React.CSSProperties} />
-              ))}
-            </div>
+        <div className="sidebar-section">
+          <div className="section-label">Projects</div>
+          <div className="project-row">
+            <div className="project-icon"><HashIcon /></div>
+            <span className="project-name">OpenClaw Chat UI</span>
           </div>
-        </section>
-
-        <section className="sidebar-section objective-panel">
-          <div className="section-label">Thread objective</div>
-          <div className="objective-card">
-            <strong>{threadObjective}</strong>
-          </div>
-        </section>
-
-        <section className="sidebar-section milestone-panel">
-          <div className="section-label">Objective timeline</div>
-          {phases.map((phase) => (
-            <div className={`phase-row ${phase.status}`} key={phase.id}>
-              <div className="phase-head">
-                <strong>{phase.label}</strong>
-                <span>{phase.range}</span>
-              </div>
-              <p>{phase.objective}</p>
-            </div>
-          ))}
-        </section>
-
-        <section className="sidebar-section">
-          <div className="section-label">Project</div>
-          <button className="thread active"># project chat</button>
-          {threads.slice(1).map((thread) => (
-            <button className="thread" key={thread}>
-              # {thread}
-            </button>
-          ))}
-        </section>
-
-        <section className="sidebar-section">
-          <div className="section-label">Agents</div>
-          {agents.map((agent) => (
-            <div className="agent-row" key={agent.id} style={{ '--agent-accent': agent.accent } as React.CSSProperties}>
-              <span className="agent-dot" style={{ background: agent.accent }} />
-              <div>
-                <div className="agent-name">{agent.name}</div>
-                <div className="agent-meta">
-                  {agent.role} · {agent.status}
+          <div className="thread-list">
+            {projectThreads.map((thread) => (
+              <div className={`thread-item ${thread.active ? 'active' : ''}`} key={thread.name}>
+                <div className="thread-dots">
+                  {thread.dots.map((color, i) => (
+                    <span key={i} className="thread-dot" style={{ backgroundColor: color, marginLeft: i > 0 ? -5 : 0 }} />
+                  ))}
                 </div>
+                <span className={thread.active ? '' : 'thread-muted'}>{thread.name}</span>
               </div>
-              <span className="memory-chip">{agent.memoryScope}</span>
-            </div>
-          ))}
-        </section>
+            ))}
+          </div>
+        </div>
+
+        <div className="sidebar-section">
+          <div className="section-label">Agents</div>
+          <div className="agent-list">
+            {agents.map((agent) => (
+              <div className="agent-row" key={agent.id}>
+                <div className="agent-icon-wrap">
+                  <AgentIcon icon={agent.icon} size={16} />
+                </div>
+                <span className="agent-name">{agent.name}</span>
+                <span className={`agent-role ${agent.status === 'active' ? 'active' : ''}`}>{agent.role}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </aside>
 
-      <main className="chat-shell">
-        <header className="chat-header" style={{ '--agent-accent': activeAgent.accent } as React.CSSProperties}>
-          <div>
-            <div className="eyebrow">Project Chat</div>
-            <h2>opencloud talk UI A</h2>
-            <p className="muted header-copy">
-              A single room where Mona orchestrates, Rune shapes the UI shell, and Iris promotes stable agreements into memory.
-            </p>
+      {/* Main Content Area */}
+      <div className="main-area">
+        {/* Top Bar */}
+        <header className="top-bar">
+          <div className="breadcrumb">
+            <span className="breadcrumb-parent">OpenClaw Chat UI</span>
+            <span className="breadcrumb-sep">&gt;</span>
+            <span className="breadcrumb-current">Init version</span>
           </div>
-          <div className="header-chips">
-            <span className="chip strong">3 agents active</span>
-            <span className="chip">default multi-agent room</span>
-            <span className="chip">timeline-aware thread</span>
+          <div className="tab-switcher">
+            {(['timeline', 'file', 'memory'] as PanelMode[]).map((mode) => (
+              <button
+                key={mode}
+                className={`tab-btn ${panelMode === mode ? 'active' : ''}`}
+                onClick={() => setPanelMode(mode)}
+              >
+                {mode === 'timeline' ? 'Timeline' : mode === 'file' ? 'File' : 'Memory'}
+              </button>
+            ))}
           </div>
         </header>
 
-        <section className="active-strip">
-          <div className="strip-card">
-            <div className="section-label">Current objective</div>
-            <strong>{currentPhase?.objective}</strong>
-          </div>
-          <div className="strip-card">
-            <div className="section-label">Current state</div>
-            <strong>{panelMode === 'files' ? 'Files rail is expanded' : 'Memory rail is expanded'}</strong>
-          </div>
-        </section>
-
-        <div className="chat-stream">
-          {messages.map((message) => {
-            if (message.sender === 'owner') {
-              return (
-                <article className="message owner" key={message.id}>
-                  <div className="message-meta">Owner · {message.meta}</div>
-                  <p>{message.text}</p>
-                </article>
-              )
-            }
-
-            if (message.sender === 'system') {
-              return (
-                <article className={`system-block ${message.kind ?? ''}`} key={message.id}>
-                  <div className="system-title">{message.title}</div>
-                  <p>{message.text}</p>
-                </article>
-              )
-            }
-
-            const agent = agents.find((item) => item.id === message.agentId)!
-            return (
-              <article
-                className="message agent"
-                key={message.id}
-                style={{
-                  '--agent-accent': agent.accent,
-                  '--agent-soft': agent.accentSoft,
-                  '--agent-surface': agent.accentSurface,
-                } as React.CSSProperties}
-              >
-                <div className="message-meta">
-                  <span className="agent-inline">
-                    <span className="agent-dot" style={{ background: agent.accent }} />
-                    {agent.name}
-                  </span>
-                  <span>{agent.role}</span>
-                  <span>{message.meta}</span>
+        <div className="content-columns">
+          {/* Chat Area */}
+          <div className="chat-area">
+            {/* Chat Header */}
+            <div className="chat-header">
+              <div className="chat-header-text">
+                <h1>Init version</h1>
+                <div className="chat-date">Started at Mar 22, 2026</div>
+              </div>
+              <div className="header-illustration">
+                <div className="illust-icon" style={{ width: 114, height: 114, transform: 'rotate(28.63deg)', left: 0, top: 0 }}>
+                  <AgentIcon icon="mona" size={98} />
                 </div>
+                <div className="illust-icon" style={{ width: 133, height: 133, transform: 'rotate(-17.55deg)', left: 90, top: 20 }}>
+                  <AgentIcon icon="rune" size={117} />
+                </div>
+                <div className="illust-icon" style={{ width: 138, height: 138, transform: 'rotate(8.78deg)', left: 210, top: 0 }}>
+                  <AgentIcon icon="iris" size={122} />
+                </div>
+              </div>
+            </div>
 
-                {message.kind === 'task' || message.kind === 'summary' ? (
-                  <div className="task-card">
-                    <div className="task-title">{message.title}</div>
-                    <p>{message.text}</p>
+            {/* Chat Stream */}
+            <div className="chat-stream">
+              {/* Timestamp */}
+              <div className="timestamp">Today at 09:31</div>
+
+              {messages.map((message) => {
+                if (message.sender === 'owner') {
+                  return (
+                    <div className="msg-row owner" key={message.id}>
+                      <div className="msg-bubble owner-bubble">
+                        {message.texts.map((text, i) => (
+                          <p key={i}>{text}</p>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                }
+
+                const agent = agents.find((a) => a.id === message.agentId)!
+                return (
+                  <div className="msg-row agent" key={message.id}>
+                    <div className="msg-avatar">
+                      <AgentIcon icon={agent.icon} size={20} />
+                    </div>
+                    <div className="msg-content">
+                      <div className="msg-bubbles">
+                        {message.texts.map((text, i) => (
+                          <div
+                            className="msg-bubble agent-bubble"
+                            key={i}
+                            style={{ backgroundColor: agent.bubbleColor }}
+                          >
+                            <p>{text}</p>
+                          </div>
+                        ))}
+                      </div>
+                      {message.references && (
+                        <div className="ref-row">
+                          {message.references.map((ref, i) => (
+                            <span className="ref-chip" key={i}>
+                              {ref.icon === 'rune' && (
+                                <span className="ref-chip-icon"><AgentIcon icon="rune" size={12} /></span>
+                              )}
+                              {ref.icon === 'iris' && (
+                                <span className="ref-chip-icon"><AgentIcon icon="iris" size={12} /></span>
+                              )}
+                              {ref.icon === 'check' && <CheckIcon />}
+                              {ref.icon === 'loading' && <LoadingIcon />}
+                              <span className={ref.icon === 'rune' || ref.icon === 'iris' ? 'ref-label-bold' : 'ref-label'}>
+                                {ref.label}
+                              </span>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                ) : (
-                  <p>{message.text}</p>
-                )}
-
-                {message.references && (
-                  <div className="reference-row">
-                    {message.references.files?.map((file) => (
-                      <span className="reference-chip file" key={file}>
-                        file · {file}
-                      </span>
-                    ))}
-                    {message.references.memories?.map((memory) => (
-                      <span className="reference-chip memory" key={memory}>
-                        memory · {memory}
-                      </span>
-                    ))}
-                    {message.references.agents?.map((agentRef) => (
-                      <span className="reference-chip agent" key={agentRef}>
-                        agent · {agents.find((item) => item.id === agentRef)?.name ?? agentRef}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </article>
-            )
-          })}
-        </div>
-
-        <footer className="composer">
-          <div>
-            <div className="section-label">Prompting this room</div>
-            <div className="composer-text">
-              Ask Mona to plan, delegate to Rune and Iris, review the thread timeline, or inspect files and project memory.
+                )
+              })}
             </div>
           </div>
-          <button className="compose-button">Invite another agent</button>
-        </footer>
-      </main>
 
-      <aside className={`context-panel ${panelMode}`}>
-        <div className="panel-toggle">
-          <button className={panelMode === 'files' ? 'active' : ''} onClick={() => setPanelMode('files')}>
-            Files
-          </button>
-          <button className={panelMode === 'memory' ? 'active' : ''} onClick={() => setPanelMode('memory')}>
-            Memory
-          </button>
+          {/* Right Panel */}
+          <aside className="right-panel">
+            <h2 className="panel-title">Build a chat-native workflow demo</h2>
+
+            <div className="panel-agents">
+              {agents.slice(0, 3).map((agent) => (
+                <div className="panel-agent-pill" key={agent.id}>
+                  <div className="pill-icon">
+                    <AgentIcon icon={agent.icon} size={16} />
+                  </div>
+                  <span className="pill-name">{agent.name}</span>
+                  <span className={`pill-role ${agent.status === 'active' ? 'active' : ''}`}>{agent.role}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="panel-objectives">
+              {objectives.map((obj, i) => (
+                <div className="objective-row" key={i}>
+                  <CheckIcon />
+                  <span className="objective-label">{obj.label}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="panel-current">
+              <div className="current-label">Current</div>
+              <p className="current-text">{currentObjective}</p>
+            </div>
+          </aside>
         </div>
-
-        {panelMode === 'files' ? (
-          <>
-            <div className="panel-header">
-              <div className="eyebrow">Triggered by context</div>
-              <h3>Files in play</h3>
-              <p className="muted">Visible because the thread referenced working files across multiple phases.</p>
-              <div className="callout files">Triggered by Mona referencing 3 files across 2 milestones</div>
-            </div>
-            <div className="panel-list">
-              {files.map((file) => (
-                <article className="panel-card file-card" key={file.path}>
-                  <div className="file-head">
-                    <strong>{file.name}</strong>
-                    <span className={`status ${file.status}`}>{file.status}</span>
-                  </div>
-                  <div className="small-meta">{file.path} · updated by {file.updatedBy}</div>
-                  <pre>{file.preview}</pre>
-                </article>
-              ))}
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="panel-header">
-              <div className="eyebrow">Project memory</div>
-              <h3>Remembered agreements</h3>
-              <p className="muted">Long-term rules promoted from the active conversation and preserved across phases.</p>
-              <div className="callout memory">Project memory updated by Mona, Rune, and Iris over time</div>
-            </div>
-            <div className="panel-list">
-              {memories.map((memory) => (
-                <article className="panel-card memory-card" key={memory.title}>
-                  <div className="file-head">
-                    <strong>{memory.title}</strong>
-                    <span className={`scope ${memory.scope}`}>{memory.scope}</span>
-                  </div>
-                  <div className="small-meta">changed by {memory.updatedBy}</div>
-                  <p>{memory.summary}</p>
-                </article>
-              ))}
-            </div>
-          </>
-        )}
-      </aside>
+      </div>
     </div>
   )
 }
