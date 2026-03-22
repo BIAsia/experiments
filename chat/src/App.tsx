@@ -1,8 +1,12 @@
-import { useState } from 'react'
-import { agents, messages, objectives, currentObjective, projectThreads } from './data/demo'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { allAgents, messages as allMessages, objectives, projectThreads } from './data/demo'
+import type { Agent, AgentIcon, Message } from './data/demo'
+import { usePhysicsIcons } from './usePhysicsIcons'
 import './styles/app.css'
 
 type PanelMode = 'timeline' | 'file' | 'memory'
+
+/* ====== SVG Icon Components ====== */
 
 const AgentIcon = ({ icon, size = 16 }: { icon: string; size?: number }) => {
   switch (icon) {
@@ -48,7 +52,7 @@ const CheckIcon = () => (
 )
 
 const LoadingIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="spin">
     <path d="M8 11.1C8.276 11.1 8.5 11.324 8.5 11.6V14C8.5 14.276 8.276 14.5 8 14.5C7.724 14.5 7.5 14.276 7.5 14V11.6C7.5 11.324 7.724 11.1 8 11.1ZM5.126 10.166C5.321 9.971 5.639 9.971 5.834 10.166C6.029 10.361 6.029 10.679 5.834 10.874L4.094 12.613C3.898 12.809 3.582 12.809 3.387 12.613C3.191 12.418 3.191 12.101 3.387 11.906L5.126 10.166ZM10.166 10.166C10.361 9.971 10.679 9.971 10.874 10.166L12.613 11.906C12.809 12.101 12.809 12.418 12.613 12.613C12.418 12.809 12.101 12.809 11.906 12.613L10.166 10.874C9.971 10.679 9.971 10.361 10.166 10.166ZM4.4 7.5C4.676 7.5 4.9 7.724 4.9 8C4.9 8.276 4.676 8.5 4.4 8.5H2C1.724 8.5 1.5 8.276 1.5 8C1.5 7.724 1.724 7.5 2 7.5H4.4ZM14 7.5C14.276 7.5 14.5 7.724 14.5 8C14.5 8.276 14.276 8.5 14 8.5H11.6C11.324 8.5 11.1 8.276 11.1 8C11.1 7.724 11.324 7.5 11.6 7.5H14ZM3.387 3.387C3.582 3.191 3.898 3.191 4.094 3.387L5.834 5.126C6.029 5.321 6.029 5.639 5.834 5.834C5.639 6.029 5.321 6.029 5.126 5.834L3.387 4.094C3.191 3.898 3.191 3.582 3.387 3.387ZM11.906 3.387C12.101 3.191 12.418 3.191 12.613 3.387C12.809 3.582 12.809 3.898 12.613 4.094L10.874 5.834C10.679 6.029 10.361 6.029 10.166 5.834C9.971 5.639 9.971 5.321 10.166 5.126L11.906 3.387ZM8 1.5C8.276 1.5 8.5 1.724 8.5 2V4.4C8.5 4.676 8.276 4.9 8 4.9C7.724 4.9 7.5 4.676 7.5 4.4V2C7.5 1.724 7.724 1.5 8 1.5Z" fill="#D9D9D9" />
   </svg>
 )
@@ -71,8 +75,182 @@ const HashIcon = () => (
   </svg>
 )
 
+/* ====== Typing Indicator ====== */
+
+const TypingIndicator = ({ agent }: { agent: Agent }) => (
+  <div className="msg-row agent">
+    <div className="msg-avatar">
+      <AgentIcon icon={agent.icon} size={20} />
+    </div>
+    <div className="msg-content">
+      <div className="typing-indicator">
+        <span className="typing-dot" />
+        <span className="typing-dot" />
+        <span className="typing-dot" />
+      </div>
+    </div>
+  </div>
+)
+
+/* ====== Message Simulation Hook ====== */
+
+function useMessageSimulation() {
+  const [visibleMessages, setVisibleMessages] = useState<Message[]>([])
+  const [typingAgent, setTypingAgent] = useState<Agent | null>(null)
+  const [activeAgentIds, setActiveAgentIds] = useState<Set<string>>(new Set())
+  /** The agent id that is currently "working" — either typing or just sent the latest message */
+  const [workingAgentId, setWorkingAgentId] = useState<string | null>(null)
+  const indexRef = useRef(0)
+  const timerRef = useRef<ReturnType<typeof setTimeout>>()
+
+  const scheduleNext = useCallback(() => {
+    if (indexRef.current >= allMessages.length) {
+      setTypingAgent(null)
+      // Clear working state after a beat when conversation ends
+      setTimeout(() => setWorkingAgentId(null), 1200)
+      return
+    }
+
+    const nextMsg = allMessages[indexRef.current]
+
+    // Show typing indicator for agent messages
+    if (nextMsg.sender === 'agent') {
+      const agent = allAgents.find((a) => a.id === nextMsg.agentId)
+      if (agent) {
+        setTypingAgent(agent)
+        setWorkingAgentId(agent.id)
+      }
+    } else {
+      // Owner message — no agent is working during owner typing
+      setWorkingAgentId(null)
+    }
+
+    // Schedule the message reveal
+    timerRef.current = setTimeout(() => {
+      setTypingAgent(null)
+      setVisibleMessages((prev) => [...prev, nextMsg])
+
+      // If this is an agent message, add the agent to active set
+      if (nextMsg.sender === 'agent' && nextMsg.agentId) {
+        setActiveAgentIds((prev) => {
+          const next = new Set(prev)
+          next.add(nextMsg.agentId!)
+          return next
+        })
+        // Keep this agent as "working" briefly after sending
+        setWorkingAgentId(nextMsg.agentId)
+      } else {
+        setWorkingAgentId(null)
+      }
+
+      indexRef.current++
+
+      // Schedule a short pause before the next typing indicator
+      const pauseBeforeNext = 600 + Math.random() * 400
+      timerRef.current = setTimeout(() => {
+        scheduleNext()
+      }, pauseBeforeNext)
+    }, nextMsg.delay)
+  }, [])
+
+  useEffect(() => {
+    // Start after a brief initial pause
+    timerRef.current = setTimeout(scheduleNext, 800)
+    return () => clearTimeout(timerRef.current)
+  }, [scheduleNext])
+
+  return { visibleMessages, typingAgent, activeAgentIds, workingAgentId }
+}
+
+/* ====== Physics Header Illustration ====== */
+
+function HeaderIllustration({ activeIcons }: { activeIcons: AgentIcon[] }) {
+  const { containerRef, bodies, onMouseMove, onMouseLeave } = usePhysicsIcons(activeIcons)
+
+  return (
+    <div
+      className="header-illustration"
+      ref={containerRef}
+      onMouseMove={onMouseMove}
+      onMouseLeave={onMouseLeave}
+    >
+      {bodies.map((body) => (
+        <div
+          key={body.id}
+          className="illust-icon physics-body"
+          style={{
+            width: body.baseSize + 16,
+            height: body.baseSize + 16,
+            transform: `translate(${body.x - (body.baseSize + 16) / 2}px, ${body.y - (body.baseSize + 16) / 2}px) rotate(${body.rotation}deg)`,
+          }}
+        >
+          <AgentIcon icon={body.icon} size={body.baseSize} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/* ====== Main App ====== */
+
 function App() {
   const [panelMode, setPanelMode] = useState<PanelMode>('timeline')
+  const { visibleMessages, typingAgent, activeAgentIds, workingAgentId } = useMessageSimulation()
+  const streamEndRef = useRef<HTMLDivElement>(null)
+
+  // Derive active agents from messages (ordered by first appearance)
+  const activeAgents = useMemo(() => {
+    const seen: Agent[] = []
+    for (const id of activeAgentIds) {
+      const agent = allAgents.find((a) => a.id === id)
+      if (agent) seen.push(agent)
+    }
+    return seen
+  }, [activeAgentIds])
+
+  // Icons for the physics header — derived from active agents
+  const activeIcons = useMemo<AgentIcon[]>(() => {
+    return activeAgents.map((a) => a.icon)
+  }, [activeAgents])
+
+  // Thread dots — derived from active agents
+  const threadDots = useMemo(() => {
+    return activeAgents.map((a) => a.color)
+  }, [activeAgents])
+
+  // Derive objective completion from visible messages
+  const visibleMessageIds = useMemo(() => {
+    return new Set(visibleMessages.map((m) => m.id))
+  }, [visibleMessages])
+
+  const completedObjectives = useMemo(() => {
+    return objectives.map((obj) => ({
+      ...obj,
+      done: visibleMessageIds.has(obj.afterMessageId),
+    }))
+  }, [visibleMessageIds])
+
+  // Current objective = first incomplete, or last one if all done
+  const currentPhase = useMemo(() => {
+    const firstIncomplete = completedObjectives.find((o) => !o.done)
+    if (firstIncomplete) return firstIncomplete
+    return completedObjectives[completedObjectives.length - 1]
+  }, [completedObjectives])
+
+  const allObjectivesDone = useMemo(() => {
+    return completedObjectives.every((o) => o.done)
+  }, [completedObjectives])
+
+  // Helper: get display role for an agent
+  const getAgentDisplayRole = useCallback((agent: Agent) => {
+    if (workingAgentId === agent.id) return agent.roleActive
+    return agent.role
+  }, [workingAgentId])
+
+  // Auto-scroll to bottom when new messages appear
+  useEffect(() => {
+    streamEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+  }, [visibleMessages, typingAgent])
 
   return (
     <div className="app-shell">
@@ -96,14 +274,26 @@ function App() {
             <span className="project-name">OpenClaw Chat UI</span>
           </div>
           <div className="thread-list">
-            {projectThreads.map((thread) => (
-              <div className={`thread-item ${thread.active ? 'active' : ''}`} key={thread.name}>
+            <div className="thread-item active">
+              <div className="thread-dots">
+                {threadDots.length > 0 ? (
+                  threadDots.map((color, i) => (
+                    <span key={i} className="thread-dot" style={{ backgroundColor: color, marginLeft: i > 0 ? -5 : 0 }} />
+                  ))
+                ) : (
+                  <span className="thread-dot-empty" />
+                )}
+              </div>
+              <span>Init version</span>
+            </div>
+            {projectThreads.filter((t) => !t.active).map((thread) => (
+              <div className="thread-item" key={thread.name}>
                 <div className="thread-dots">
                   {thread.dots.map((color, i) => (
                     <span key={i} className="thread-dot" style={{ backgroundColor: color, marginLeft: i > 0 ? -5 : 0 }} />
                   ))}
                 </div>
-                <span className={thread.active ? '' : 'thread-muted'}>{thread.name}</span>
+                <span className="thread-muted">{thread.name}</span>
               </div>
             ))}
           </div>
@@ -112,15 +302,21 @@ function App() {
         <div className="sidebar-section">
           <div className="section-label">Agents</div>
           <div className="agent-list">
-            {agents.map((agent) => (
-              <div className="agent-row" key={agent.id}>
-                <div className="agent-icon-wrap">
-                  <AgentIcon icon={agent.icon} size={16} />
+            {allAgents.map((agent) => {
+              const isActive = activeAgentIds.has(agent.id)
+              const isWorking = workingAgentId === agent.id
+              return (
+                <div className={`agent-row ${isActive ? 'agent-active' : ''}`} key={agent.id}>
+                  <div className="agent-icon-wrap">
+                    <AgentIcon icon={agent.icon} size={16} />
+                  </div>
+                  <span className="agent-name">{agent.name}</span>
+                  <span className={`agent-role ${isWorking ? 'working' : isActive ? 'active' : ''}`}>
+                    {getAgentDisplayRole(agent)}
+                  </span>
                 </div>
-                <span className="agent-name">{agent.name}</span>
-                <span className={`agent-role ${agent.status === 'active' ? 'active' : ''}`}>{agent.role}</span>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </aside>
@@ -156,28 +352,17 @@ function App() {
                 <h1>Init version</h1>
                 <div className="chat-date">Started at Mar 22, 2026</div>
               </div>
-              <div className="header-illustration">
-                <div className="illust-icon" style={{ width: 114, height: 114, transform: 'rotate(28.63deg)', left: 0, top: 0 }}>
-                  <AgentIcon icon="mona" size={98} />
-                </div>
-                <div className="illust-icon" style={{ width: 133, height: 133, transform: 'rotate(-17.55deg)', left: 90, top: 20 }}>
-                  <AgentIcon icon="rune" size={117} />
-                </div>
-                <div className="illust-icon" style={{ width: 138, height: 138, transform: 'rotate(8.78deg)', left: 210, top: 0 }}>
-                  <AgentIcon icon="iris" size={122} />
-                </div>
-              </div>
+              <HeaderIllustration activeIcons={activeIcons} />
             </div>
 
             {/* Chat Stream */}
             <div className="chat-stream">
-              {/* Timestamp */}
               <div className="timestamp">Today at 09:31</div>
 
-              {messages.map((message) => {
+              {visibleMessages.map((message) => {
                 if (message.sender === 'owner') {
                   return (
-                    <div className="msg-row owner" key={message.id}>
+                    <div className="msg-row owner msg-enter" key={message.id}>
                       <div className="msg-bubble owner-bubble">
                         {message.texts.map((text, i) => (
                           <p key={i}>{text}</p>
@@ -187,9 +372,9 @@ function App() {
                   )
                 }
 
-                const agent = agents.find((a) => a.id === message.agentId)!
+                const agent = allAgents.find((a) => a.id === message.agentId)!
                 return (
-                  <div className="msg-row agent" key={message.id}>
+                  <div className="msg-row agent msg-enter" key={message.id}>
                     <div className="msg-avatar">
                       <AgentIcon icon={agent.icon} size={20} />
                     </div>
@@ -209,15 +394,15 @@ function App() {
                         <div className="ref-row">
                           {message.references.map((ref, i) => (
                             <span className="ref-chip" key={i}>
-                              {ref.icon === 'rune' && (
-                                <span className="ref-chip-icon"><AgentIcon icon="rune" size={12} /></span>
-                              )}
-                              {ref.icon === 'iris' && (
-                                <span className="ref-chip-icon"><AgentIcon icon="iris" size={12} /></span>
+                              {(ref.icon === 'rune' || ref.icon === 'iris' || ref.icon === 'mona' || ref.icon === 'goody' || ref.icon === 'nancy') && (
+                                <span className="ref-chip-icon"><AgentIcon icon={ref.icon} size={12} /></span>
                               )}
                               {ref.icon === 'check' && <CheckIcon />}
                               {ref.icon === 'loading' && <LoadingIcon />}
-                              <span className={ref.icon === 'rune' || ref.icon === 'iris' ? 'ref-label-bold' : 'ref-label'}>
+                              <span className={
+                                ref.icon === 'rune' || ref.icon === 'iris' || ref.icon === 'mona' || ref.icon === 'goody' || ref.icon === 'nancy'
+                                  ? 'ref-label-bold' : 'ref-label'
+                              }>
                                 {ref.label}
                               </span>
                             </span>
@@ -228,6 +413,10 @@ function App() {
                   </div>
                 )
               })}
+
+              {typingAgent && <TypingIndicator agent={typingAgent} />}
+
+              <div ref={streamEndRef} />
             </div>
           </div>
 
@@ -236,21 +425,31 @@ function App() {
             <h2 className="panel-title">Build a chat-native workflow demo</h2>
 
             <div className="panel-agents">
-              {agents.slice(0, 3).map((agent) => (
-                <div className="panel-agent-pill" key={agent.id}>
-                  <div className="pill-icon">
-                    <AgentIcon icon={agent.icon} size={16} />
+              {activeAgents.length === 0 && (
+                <div className="panel-agents-empty">Waiting for agents to join...</div>
+              )}
+              {activeAgents.map((agent) => {
+                const isWorking = workingAgentId === agent.id
+                return (
+                  <div className="panel-agent-pill pill-enter" key={agent.id}>
+                    <div className="pill-icon">
+                      <AgentIcon icon={agent.icon} size={16} />
+                    </div>
+                    <span className="pill-name">{agent.name}</span>
+                    <span className={`pill-role ${isWorking ? 'working' : ''}`}>
+                      {getAgentDisplayRole(agent)}
+                    </span>
                   </div>
-                  <span className="pill-name">{agent.name}</span>
-                  <span className={`pill-role ${agent.status === 'active' ? 'active' : ''}`}>{agent.role}</span>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             <div className="panel-objectives">
-              {objectives.map((obj, i) => (
-                <div className="objective-row" key={i}>
-                  <CheckIcon />
+              {completedObjectives.map((obj, i) => (
+                <div className={`objective-row ${obj.done ? 'done' : ''} ${!obj.done && currentPhase?.label === obj.label ? 'current' : ''}`} key={i}>
+                  {obj.done ? <CheckIcon /> : (
+                    <div className="objective-dot" />
+                  )}
                   <span className="objective-label">{obj.label}</span>
                 </div>
               ))}
@@ -258,7 +457,11 @@ function App() {
 
             <div className="panel-current">
               <div className="current-label">Current</div>
-              <p className="current-text">{currentObjective}</p>
+              <p className="current-text" key={currentPhase?.label}>
+                {allObjectivesDone
+                  ? 'All objectives completed. The workspace is ready.'
+                  : currentPhase?.description}
+              </p>
             </div>
           </aside>
         </div>
