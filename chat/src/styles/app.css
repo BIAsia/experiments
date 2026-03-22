@@ -752,11 +752,8 @@ body {
   flex-direction: column;
   gap: 8px;
   padding: 14px 0;
-  border-top: 1px solid #F2F2F2;
   transition: background 220ms ease, transform 220ms ease, border-color 220ms ease;
-  border-left: 0;
-  border-right: 0;
-  border-bottom: 0;
+  border: 0;
   text-align: left;
   width: 100%;
   background: transparent;
@@ -792,7 +789,6 @@ body {
 
 .timeline-card:first-child,
 .context-card:first-child {
-  border-top: 0;
   padding-top: 0;
 }
 
